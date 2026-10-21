@@ -1,0 +1,55 @@
+{% macro icon(name, size=16, color="currentColor") -%}
+{%- if name == "chev" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="{{ color }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+{%- elif name == "back" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="{{ color }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+{%- elif name == "arrow" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="{{ color }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+{%- elif name == "search" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="{{ color }}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+{%- elif name == "play" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+{%- elif name == "check" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="#073042" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+{%- elif name == "shorts" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="{{ color }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 9.5v5l3.5-2.5z"/></svg>
+{%- elif name == "ext" -%}<svg class="ext-ic" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="{{ color }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+{%- elif name == "close" -%}<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="{{ color }}" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+{%- endif -%}
+{%- endmacro %}
+
+{# 음악 형식(kind music)은 별점 · 수명이 없다. 별점 자리에 ♪ 형식을, 수명 자리에는 아무것도 표시하지 않는다.
+   표시 이름은 label() 이 언어에 맞춘다 (저장된 값은 그대로 data-* 에 둔다) #}
+{% macro rating_pill(v, full=True) -%}
+{% if v.kind == "music" %}<span class="pill c-sky">♪ {{ label("format", v.format) }}</span>{% else -%}
+<span class="pill {{ 'c-lime' if v.rating >= 4 else 'c-gray' }}">★ {{ v.rating }}{% if full %} {{ label("rec", v.recommendation) }}{% endif %}</span>
+{%- endif %}
+{%- endmacro %}
+
+{% macro life_pill(v) -%}
+{% if v.kind != "music" %}<span class="pill {{ v.life_class }}">{{ label("life", v.lifespan) }}</span>{% endif %}
+{%- endmacro %}
+
+{# 홈 · 볼 만한 영상의 동영상 카드. data-* 는 필터에 사용한다 #}
+{% macro vcard(v, root) -%}
+{% if v.short %}
+<a class="vcard short" data-vid="{{ v.video_id }}" href="{{ root }}{{ v.href }}" data-rating="{{ v.rating }}" data-life="{{ v.lifespan }}" data-short="1">
+  <div class="thumb tall"><img src="{{ v.thumb }}" alt="" loading="lazy"><span class="dur">{{ v.duration }}</span></div>
+  <div class="body">
+    <span class="title">{{ v.title }}</span>
+    <span class="sum">{{ v.shortSummary }}</span>
+    <span class="pills"><span class="pill c-brand">Shorts</span><span class="pill {{ v.cat_class }}">{{ v.cat.name }}</span>{{ rating_pill(v, False) }}</span>
+  </div>
+</a>
+{% else %}
+<a class="vcard" data-vid="{{ v.video_id }}" href="{{ root }}{{ v.href }}" data-rating="{{ v.rating }}" data-life="{{ v.lifespan }}" data-short="0">
+  <div class="row">
+    <div class="thumb"><img src="{{ v.thumb }}" alt="" loading="lazy"><span class="dur">{{ v.duration }}</span></div>
+    <span class="title">{{ v.title }}</span>
+  </div>
+  <div class="pills"><span class="pill {{ v.cat_class }}">{{ v.cat.name }}</span>{{ rating_pill(v) }}{{ life_pill(v) }}</div>
+</a>
+{% endif %}
+{%- endmacro %}
+
+{# 카테고리 상세 · 주간 요약의 한 줄 목록 #}
+{% macro vrow(v, root) -%}
+<a class="vrow" data-vid="{{ v.video_id }}" href="{{ root }}{{ v.href }}" data-rating="{{ v.rating }}" data-life="{{ v.lifespan }}" data-short="{{ 1 if v.short else 0 }}"
+   data-date="{{ v.sort_key }}" data-liferank="{{ v.life_rank }}">
+  <span class="title">{{ v.title }}</span>
+  <span class="pills">{% if v.short %}<span class="pill c-brand">Shorts</span>{% endif %}{{ rating_pill(v, False) }}{{ life_pill(v) }}<span class="when">{{ v.summarized[5:] }} · {{ v.duration }}</span></span>
+</a>
+{%- endmacro %}

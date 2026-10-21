@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{# 음악 영상: 내용 요약 없이 곡 정보만 보여 준다 #}
+{% block body %}
+<div class="doc">
+<nav class="crumbs" aria-label="{{ t("nav.crumbs") }}">
+  <a href="{{ root }}index.html">{{ t("nav.home") }}</a>{{ icon("chev", 14, "#5F6368") }}<a href="{{ root }}{{ c.href }}">{{ v.cat.name }}</a>
+</nav>
+
+<div class="dhead">
+  <h1>{{ v.title }}</h1>
+  <div class="pills lg"><span class="pill c-sky">♪ {{ label("format", v.format) }}</span>{% if v.short %}<span class="pill c-brand">Shorts</span>{% endif %}</div>
+</div>
+
+<a class="player" href="{{ v.url }}" aria-label="{{ t("sum.play") }}" style="background-image: url('{{ v.thumb_large }}')">
+  <span class="play">{{ icon("play", 24) }}</span><span class="dur">{{ v.duration }}</span>
+</a>
+
+<dl class="meta">
+  <dt>{{ t("music.artist") }}</dt><dd>{{ v.artist }}</dd>
+  <dt>{{ t("music.song") }}</dt><dd>{{ v.song }}</dd>
+  {% if v.album %}<dt>{{ t("music.album") }}</dt><dd>{{ v.album }}</dd>{% endif %}
+  <dt>{{ t("music.released") }}</dt><dd class="mono">{{ v.releaseYear or "-" }}</dd>
+  <dt>{{ t("sum.channel") }}</dt><dd>{{ v.channel }}</dd>
+  <dt>{{ t("sum.published") }}</dt><dd class="mono">{{ v.published or "-" }}</dd>
+  <dt>{{ t("sum.source") }}</dt><dd><a href="{{ v.url }}" style="font-weight: 500">{{ v.url_label }}</a></dd>
+</dl>
+
+{% if v.songs %}
+<section class="sec">
+  <h2>{{ t("music.songs") }}</h2>
+  <ol class="plain">{% for x in v.songs %}<li>{{ x }}</li>{% endfor %}</ol>
+</section>
+{% endif %}
+
+{% if v.credits %}
+<section class="sec">
+  <h2>{{ t("music.credits") }}</h2>
+  <ul class="plain">{% for x in v.credits %}<li>{{ x }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if v.categoryProposal %}
+<section class="sec">
+  <h2>{{ t("sum.proposal") }}</h2>
+  <p>{{ v.categoryProposal }}</p>
+  {% if v.proposal_href %}<div class="rm-row" style="margin-top: 12px"><a class="rm-btn" href="{{ root }}{{ v.proposal_href }}">{{ t("sum.proposal_create") }}</a></div>{% endif %}
+</section>
+{% endif %}
+
+<section class="tags">
+  {% for tag in v.tags %}<a class="tag" href="{{ root }}search.html?q={{ tag | urlencode }}">#{{ tag }}</a>{% endfor %}
+</section>
+
+{% include "_manage.html" %}
+{% include "_related.html" %}
+</div>
+{% endblock %}

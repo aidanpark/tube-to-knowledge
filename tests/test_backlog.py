@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-from ytbook import backlog
-from ytbook.summarize import SummaryError
+from t2k import backlog
+from t2k.summarize import SummaryError
 
 
 def item(vid, title="제목"):

@@ -1,7 +1,7 @@
 """디스코드 입력: 링크 추출, 새 메시지 선별, 토큰 파일. 디스코드는 호출하지 않는다."""
 import pytest
 
-from ytbook import discord_inbox as di
+from t2k import discord_inbox as di
 
 
 def msg(mid, author, content="", embeds=(), reply_to=None):

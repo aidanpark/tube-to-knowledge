@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, vrow %}
+{% block body %}
+<nav class="crumbs" aria-label="{{ t("nav.crumbs") }}">
+  <a href="{{ root }}categories.html">{{ t("nav.categories") }}</a>{{ icon("chev", 14, "#5F6368") }}<span class="here">{{ c.cat.name }}</span>
+</nav>
+
+<section class="chead {{ c.bg_class }}">
+  <span class="id" style="color: {{ c.fg }}">{{ c.cat.id }}</span>
+  <h1>{{ c.cat.name }}</h1>
+  <p>{{ c.cat.scope }}</p>
+  <div class="stats">
+    <div><b>{{ c.count }}</b><span>{{ t("cat.stat_summaries") }}</span></div>
+    <div><b>{{ c.week_count }}</b><span>{{ t("cat.stat_week") }}</span></div>
+    <div><b>{{ c.top_count }}</b><span>{{ t("cat.stat_top") }}</span></div>
+  </div>
+</section>
+
+{% if c.weeklies %}
+<section class="sec">
+  <h2 style="margin-bottom: 14px">{{ t("cat.weekly") }}</h2>
+  <div class="cards">
+    {% for w in c.weeklies %}
+    {% if loop.first %}
+    <a class="ccard c-brand" href="{{ root }}{{ w.href }}" style="color: #FFFFFF">
+      <span style="font-size: 13px; font-weight: 500; color: var(--green)">{{ t("cat.latest", label=w.label) }}</span>
+      <span style="font-size: 18px; font-weight: 500">{{ w.range }}</span>
+      <span style="font-size: 14px; color: var(--sky)">{{ tn("count.summaries", w.count) }}</span>
+    </a>
+    {% else %}
+    <a class="vrow" href="{{ root }}{{ w.href }}" style="border: 1px solid var(--line); border-radius: 24px"><span class="title">{{ w.label }} · {{ w.range }}</span><span class="pills"><span class="when">{{ tn("count.summaries", w.count) }}</span></span></a>
+    {% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="sec">
+  <div class="sec-head" style="padding-bottom: 12px">
+    <h2>{{ tn("count.summaries", c.count) }}</h2>
+    {% if c.videos %}
+    <label class="sort">{{ t("cat.sort") }}
+      <select data-sort>
+        <option value="date">{{ t("cat.sort_date") }}</option>
+        <option value="rating">{{ t("cat.sort_rating") }}</option>
+        <option value="life">{{ t("cat.sort_life") }}</option>
+      </select>
+    </label>
+    {% endif %}
+  </div>
+  {% if c.videos %}
+  <div class="chips" style="padding: 0 0 14px" role="group" aria-label="{{ t("filter.aria") }}" data-filter-group>
+    <button type="button" class="chip" aria-pressed="true" data-filter="all">{{ t("filter.all") }}</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="life:짧음">{{ label("life", "짧음") }}</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="life:중간">{{ label("life", "중간") }}</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="life:긺">{{ label("life", "긺") }}</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="short">Shorts</button>
+  </div>
+  <div class="rows" data-filter-target>
+    {% for v in c.videos %}{{ vrow(v, root) }}{% endfor %}
+  </div>
+  <div class="empty" data-filter-empty hidden style="margin: 0"><b>{{ t("empty.no_match") }}</b>{{ t("empty.no_match_body") }}</div>
+  {% else %}
+  <div class="empty" style="margin: 0"><b>{{ t("empty.no_summaries") }}</b></div>
+  {% endif %}
+</section>
+{% if c.cat.id != other_id %}
+<section class="manage" data-cat-delete="{{ c.cat.id }}" data-name="{{ c.cat.name }}">
+  <div data-state="idle"><div class="rm-row"><button type="button" class="rm-btn" data-act="ask">{{ t("cat.delete") }}</button></div></div>
+  <div data-state="confirm" hidden>
+    <p>{{ t("cat.delete_confirm", name=c.cat.name) }}{% if c.count %}{{ tn("cat.delete_moves", c.count, other=other_name) }}{% endif %}</p>
+    <div class="rm-row"><button type="button" class="rm-btn danger" data-act="remove">{{ t("btn.delete") }}</button><button type="button" class="rm-btn" data-act="cancel">{{ t("btn.cancel") }}</button></div>
+  </div>
+  <div data-state="pending" hidden>
+    <p>{{ t("cat.delete_pending") }}</p>
+    <div class="rm-row"><button type="button" class="rm-btn" data-act="undo">{{ t("cat.undo_delete") }}</button></div>
+  </div>
+  <p class="rm-msg" role="status"></p>
+</section>
+{% endif %}
+<div class="spacer"></div>
+{% endblock %}
+{% block scripts %}<script src="{{ root }}assets/filter.js?v={{ build_id }}"></script>{% endblock %}

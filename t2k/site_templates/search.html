@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block body %}
+<div class="searchbox">
+  <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{ t("search.label") }}</label>
+  <div class="field">
+    {{ icon("search", 20) }}
+    <input id="q" type="search" autocomplete="off" placeholder="{{ t("search.placeholder") }}" role="combobox" aria-controls="suggest" aria-expanded="false">
+    <button type="button" class="clear" aria-label="{{ t("search.clear") }}" hidden>{{ icon("close", 18) }}</button>
+  </div>
+  <div id="suggest" class="suggest" role="listbox" aria-label="{{ t("search.suggest") }}" hidden></div>
+</div>
+<div class="chips scroll" style="padding-top: 16px" role="group" aria-label="{{ t("filter.aria") }}">
+  <button type="button" class="chip" aria-pressed="true" data-type="all">{{ t("filter.all") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-type="요약">{{ label("type", "요약") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-type="주간 요약">{{ label("type", "주간 요약") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-toggle="top">{{ t("filter.top") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-toggle="shorts">Shorts</button>
+</div>
+<div class="chips scroll" style="padding-top: 8px" role="group" aria-label="{{ t("filter.lifespan") }}">
+  <button type="button" class="chip" aria-pressed="false" data-life="짧음">{{ label("life", "짧음") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-life="중간">{{ label("life", "중간") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-life="긺">{{ label("life", "긺") }}</button>
+</div>
+<div class="count"><span id="count" aria-live="polite" tabindex="-1">{{ t("search.loading") }}</span><span id="order">{{ t("js.order_newest") }}</span></div>
+<div class="results" id="results"></div>
+<nav class="pager" id="pager" aria-label="{{ t("search.pager") }}" hidden></nav>
+{% endblock %}
+{% block scripts %}<script src="assets/search.js?v={{ build_id }}"></script>{% endblock %}

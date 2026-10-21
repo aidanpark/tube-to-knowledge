@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "t2k 구조",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1380,
+      620
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "화면"
+        },
+        "backend": {
+          "label": "프로그램"
+        },
+        "database": {
+          "label": "저장소"
+        },
+        "cloud": {
+          "label": "클라우드"
+        },
+        "security": {
+          "label": "접근 제어"
+        },
+        "messagebus": {
+          "label": "메신저"
+        },
+        "external": {
+          "label": "외부"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "family",
+      "type": "external",
+      "label": "가족",
+      "sublabel": "링크 · 지시를 올린다",
+      "pos": [
+        10,
+        250
+      ],
+      "size": [
+        120,
+        72
+      ]
+    },
+    {
+      "id": "discord",
+      "type": "messagebus",
+      "label": "Discord",
+      "sublabel": "사람별 채널",
+      "brand": "discord",
+      "pos": [
+        210,
+        250
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "t2k",
+      "type": "backend",
+      "label": "t2k",
+      "sublabel": "파이프라인 · 봇 · agent",
+      "pos": [
+        490,
+        250
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "youtube",
+      "type": "external",
+      "label": "YouTube",
+      "sublabel": "자막 (yt-dlp)",
+      "brand": "youtube",
+      "pos": [
+        495,
+        70
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "claude",
+      "type": "backend",
+      "label": "Claude Code",
+      "sublabel": "요약 · 지시 처리",
+      "brand": "claude",
+      "pos": [
+        420,
+        450
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "data",
+      "type": "database",
+      "label": "데이터 저장소",
+      "sublabel": "git · 요약 · 카테고리",
+      "pos": [
+        600,
+        450
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "cloud",
+      "label": "Workers",
+      "sublabel": "사람별 사이트",
+      "brand": "cloudflare",
+      "pos": [
+        830,
+        250
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "kv",
+      "type": "database",
+      "label": "KV 대기열",
+      "sublabel": "사이트에서 한 조작",
+      "pos": [
+        830,
+        450
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "access",
+      "type": "security",
+      "label": "Access",
+      "sublabel": "가족만 로그인",
+      "pos": [
+        1030,
+        250
+      ],
+      "size": [
+        130,
+        72
+      ]
+    },
+    {
+      "id": "reader",
+      "type": "frontend",
+      "label": "브라우저",
+      "sublabel": "읽고 정리한다",
+      "pos": [
+        1230,
+        250
+      ],
+      "size": [
+        120,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "내 Mac (launchd)",
+      "wraps": [
+        "t2k",
+        "claude",
+        "data"
+      ],
+      "pad": 28
+    },
+    {
+      "kind": "region",
+      "label": "Cloudflare",
+      "wraps": [
+        "worker",
+        "kv",
+        "access"
+      ],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {
+      "id": "post",
+      "from": "family",
+      "to": "discord",
+      "label": "링크 · 지시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "poll",
+      "from": "discord",
+      "to": "t2k",
+      "label": "읽기"
+    },
+    {
+      "id": "subs",
+      "from": "youtube",
+      "to": "t2k",
+      "label": "자막",
+      "labelAt": [
+        570,
+        196
+      ]
+    },
+    {
+      "id": "llm",
+      "from": "t2k",
+      "to": "claude",
+      "label": "요약 요청",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "commit",
+      "from": "t2k",
+      "to": "data",
+      "label": "커밋 · 푸시",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "deploy",
+      "from": "t2k",
+      "to": "worker",
+      "label": "배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gate",
+      "from": "worker",
+      "to": "access",
+      "variant": "security"
+    },
+    {
+      "id": "read",
+      "from": "access",
+      "to": "reader",
+      "label": "열람",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ops",
+      "from": "worker",
+      "to": "kv",
+      "label": "삭제 · 이동",
+      "variant": "dashed",
+      "labelAt": [
+        900,
+        386
+      ]
+    },
+    {
+      "id": "sync",
+      "from": "kv",
+      "to": "t2k",
+      "label": "5분마다 반영",
+      "variant": "dashed"
+    }
+  ]
+}

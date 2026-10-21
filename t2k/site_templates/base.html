@@ -1,0 +1,33 @@
+{% from "_macros.html" import icon %}<!doctype html>
+<html lang="{{ lang }}" data-root="{{ root }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>{{ title }}{% if title != app_name %} · {{ app_name }}{% endif %}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%23073042%22/%3E%3Cpath d=%22M9.5 7.5v9l7-4.5z%22 fill=%22%233DDC84%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="{{ root }}assets/style.css?v={{ build_id }}">
+{% if user_css %}<link rel="stylesheet" href="{{ root }}assets/user.css?v={{ build_id }}">{% endif %}
+</head>
+<body>
+<div class="page">
+<nav class="tabs" aria-label="{{ t("nav.aria") }}">
+  <a class="tab{% if tab == 'recent' %} on{% endif %}" href="{{ root }}index.html"{% if tab == 'recent' %} aria-current="page"{% endif %}>{{ t("nav.recent") }}</a>
+  <a class="tab{% if tab == 'categories' %} on{% endif %}" href="{{ root }}categories.html"{% if tab == 'categories' %} aria-current="page"{% endif %}>{{ t("nav.categories") }}</a>
+  <a class="tab{% if tab == 'weeks' %} on{% endif %}" href="{{ root }}weeks.html"{% if tab == 'weeks' %} aria-current="page"{% endif %}>{{ t("nav.weeks") }}</a>
+  <a class="search-btn{% if tab == 'search' %} on{% endif %}" href="{{ root }}search.html" aria-label="{{ t("nav.search") }}"{% if tab == 'search' %} aria-current="page"{% endif %}>{{ icon("search", 22) }}</a>
+</nav>
+{% block body %}{% endblock %}
+<footer>
+  <div class="links"><a href="{{ root }}search.html">{{ t("footer.all") }}</a><a href="{{ root }}categories.html">{{ t("nav.categories") }}</a><a href="{{ root }}weeks.html">{{ t("nav.weeks") }}</a></div>
+  <span>{{ t("footer.note") }}</span>
+  <span>{{ t("footer.updated") }} <span class="mono">{{ built_at }}</span></span>
+</footer>
+</div>
+<script>document.addEventListener('touchstart', () => {}, { passive: true });</script>
+<script>window.YT_I18N = {{ js_i18n | tojson }};</script>
+<script src="{{ root }}assets/ripple.js?v={{ build_id }}" defer></script>
+<script src="{{ root }}assets/ops.js?v={{ build_id }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

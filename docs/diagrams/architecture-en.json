@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "tube-to-knowledge architecture",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1380,
+      620
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Screen"
+        },
+        "backend": {
+          "label": "Program"
+        },
+        "database": {
+          "label": "Storage"
+        },
+        "cloud": {
+          "label": "Cloud"
+        },
+        "security": {
+          "label": "Access control"
+        },
+        "messagebus": {
+          "label": "Messenger"
+        },
+        "external": {
+          "label": "External"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "family",
+      "type": "external",
+      "label": "Family",
+      "sublabel": "Shares links",
+      "pos": [
+        10,
+        250
+      ],
+      "size": [
+        120,
+        72
+      ]
+    },
+    {
+      "id": "discord",
+      "type": "messagebus",
+      "label": "Discord",
+      "sublabel": "A channel per person",
+      "brand": "discord",
+      "pos": [
+        210,
+        250
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "t2k",
+      "type": "backend",
+      "label": "t2k",
+      "sublabel": "Pipeline · bot · agent",
+      "pos": [
+        490,
+        250
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "youtube",
+      "type": "external",
+      "label": "YouTube",
+      "sublabel": "Captions (yt-dlp)",
+      "brand": "youtube",
+      "pos": [
+        495,
+        70
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "claude",
+      "type": "backend",
+      "label": "Claude Code",
+      "sublabel": "Summaries & requests",
+      "brand": "claude",
+      "pos": [
+        420,
+        450
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "data",
+      "type": "database",
+      "label": "Data repo",
+      "sublabel": "git · summaries",
+      "pos": [
+        600,
+        450
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "cloud",
+      "label": "Workers",
+      "sublabel": "A site per person",
+      "brand": "cloudflare",
+      "pos": [
+        830,
+        250
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "kv",
+      "type": "database",
+      "label": "KV queue",
+      "sublabel": "Edits made on the site",
+      "pos": [
+        830,
+        450
+      ],
+      "size": [
+        140,
+        72
+      ]
+    },
+    {
+      "id": "access",
+      "type": "security",
+      "label": "Access",
+      "sublabel": "Family-only login",
+      "pos": [
+        1030,
+        250
+      ],
+      "size": [
+        130,
+        72
+      ]
+    },
+    {
+      "id": "reader",
+      "type": "frontend",
+      "label": "Browser",
+      "sublabel": "Read & organize",
+      "pos": [
+        1230,
+        250
+      ],
+      "size": [
+        120,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "My Mac (launchd)",
+      "wraps": [
+        "t2k",
+        "claude",
+        "data"
+      ],
+      "pad": 28
+    },
+    {
+      "kind": "region",
+      "label": "Cloudflare",
+      "wraps": [
+        "worker",
+        "kv",
+        "access"
+      ],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {
+      "id": "post",
+      "from": "family",
+      "to": "discord",
+      "label": "Links & requests",
+      "variant": "emphasis",
+      "labelAt": [
+        170,
+        236
+      ]
+    },
+    {
+      "id": "poll",
+      "from": "discord",
+      "to": "t2k",
+      "label": "Read"
+    },
+    {
+      "id": "subs",
+      "from": "youtube",
+      "to": "t2k",
+      "label": "Captions",
+      "labelAt": [
+        570,
+        196
+      ]
+    },
+    {
+      "id": "llm",
+      "from": "t2k",
+      "to": "claude",
+      "label": "Summarize",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "commit",
+      "from": "t2k",
+      "to": "data",
+      "label": "Commit & push",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "deploy",
+      "from": "t2k",
+      "to": "worker",
+      "label": "Deploy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gate",
+      "from": "worker",
+      "to": "access",
+      "variant": "security"
+    },
+    {
+      "id": "read",
+      "from": "access",
+      "to": "reader",
+      "label": "View",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ops",
+      "from": "worker",
+      "to": "kv",
+      "label": "Delete · move",
+      "variant": "dashed",
+      "labelAt": [
+        900,
+        386
+      ]
+    },
+    {
+      "id": "sync",
+      "from": "kv",
+      "to": "t2k",
+      "label": "Every 5 min",
+      "variant": "dashed"
+    }
+  ]
+}

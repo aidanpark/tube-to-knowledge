@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from ytbook import bot, config, discord_inbox
+from t2k import bot, config, discord_inbox
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_as_record_keeps_reply_target():
 
 
 def test_agent_drains_queue_in_one_wake(users, monkeypatch):
-    from ytbook import agent
+    from t2k import agent
     calls = []
     results = iter([True, True, False])
     monkeypatch.setattr(agent, "step", lambda dc=None, runner=None: calls.append(1) or next(results))

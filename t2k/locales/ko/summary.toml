@@ -1,0 +1,83 @@
+# 요약 · 주간 요약 표시 (한국어). 요약 파일 본문(summarize.render)과 프롬프트에 채우는 값.
+# 열거 값의 표시 이름(md.recommendation 등)은 저장 코드를 키로 쓴다. 한국어는 코드 그대로다.
+
+[md]
+none = "(없음)"
+generated = "자동 생성"
+manual = "수동"
+format_short = "Shorts (짧은 형식)"
+format_full = "일반 동영상"
+no_transcript = "(자막 없음)"
+no_description = "(설명란 없음)"
+no_links = "(링크 없음)"
+original = "원본"
+tags = "태그"
+rating_line = "**평가** {rating}/5 {recommendation} · **수명** {lifespan} · **품질** {quality}"
+summary = "요약"
+key_point = "핵심"
+key_points = "핵심 포인트"
+claims = "주장과 근거"
+check_needed = "확인 필요"
+insight = "개인 인사이트"
+actions = "바로 적용할 것"
+timestamps = "타임스탬프"
+links = "관련 링크"
+watch_reason = "시청 권유 근거"
+category_proposal = "카테고리 추가 제안"
+footer = "요약은 자막을 바탕으로 Claude가 생성했다. 원문과 다를 수 있다."
+music_footer = "곡 정보는 YouTube 음악 정보 · 제목 · 설명란을 바탕으로 Claude가 정리했다."
+song_info = "곡 정보"
+song_list = "곡 목록"
+credits = "크레딧"
+artist = "가수"
+song = "곡"
+album = "앨범"
+released = "발매"
+music_format = "형식"
+
+[md.recommendation]
+"반복필수시청" = "반복필수시청"
+"필수시청" = "필수시청"
+"시간되면 시청" = "시간되면 시청"
+"요약으로 충분" = "요약으로 충분"
+"시청 불필요 삭제추천" = "시청 불필요 삭제추천"
+
+[md.lifespan]
+"짧음" = "짧음"
+"중간" = "중간"
+"긺" = "긺"
+
+[md.quality]
+high = "high"
+medium = "medium"
+low = "low"
+
+[md.evidence]
+"연구 인용" = "연구 인용"
+"데이터" = "데이터"
+"시연" = "시연"
+"의견" = "의견"
+"일화" = "일화"
+
+[md.format]
+"뮤직비디오" = "뮤직비디오"
+"라이브" = "라이브"
+"음원" = "음원"
+"커버" = "커버"
+"기타" = "기타"
+
+# 주간 요약 프롬프트에 채우는 값 (weekly.build_prompt)
+[weekly]
+channel = "채널"
+format = "형식"
+shorts = "Shorts"
+video = "일반 동영상"
+recommendation = "시청 권유"
+lifespan = "정보 수명"
+one_line = "한 줄 요약"
+flagged = "확인이 필요한 주장"
+previous = "지난 주간 요약"
+changes_rule = "지난 주간 요약과 비교해 이번 주에 처음 나온 내용은 「새로움」, 지난 주간 요약의 내용 중 이번 주 영상으로 더 이상 맞지 않게 된 것은 「대체됨」으로 0~4개 쓴다. 없으면 빈 배열이다."
+changes_none = "지난 주간 요약이 없으므로 빈 배열 [] 로 둔다."
+range = "{mon}(월) ~ {sun}(일)"
+none = "(없음)"

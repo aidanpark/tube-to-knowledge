@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pytest
 
-from ytbook import site
-from ytbook.summarize import KST, render, validate
+from t2k import site
+from t2k.summarize import KST, render, validate
 from tests.test_summarize import FULL, SHORT, TR
 
 NOW = datetime(2026, 10, 21, 9, 0, tzinfo=KST)  # 수요일, 43주

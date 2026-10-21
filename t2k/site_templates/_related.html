@@ -1,0 +1,15 @@
+{% from "_macros.html" import icon %}
+<nav class="related" aria-label="{{ t("related.aria") }}">
+  {% if v.weekly %}
+  <a class="ccard c-lime" href="{{ root }}{{ v.weekly.href }}" style="flex-direction: row; align-items: center; justify-content: space-between">
+    <span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">{{ t("related.weekly") }}</span><span style="font-size: 16px; font-weight: 500">{{ v.weekly.label }}</span></span>
+    {{ icon("arrow", 20) }}
+  </a>
+  {% endif %}
+  {% if prev or next %}
+  <div class="grid2 prevnext">
+    {% if prev %}<a href="{{ root }}{{ prev.href }}"><small>{{ t("related.prev") }}</small><span>{{ prev.title }}</span></a>{% else %}<span></span>{% endif %}
+    {% if next %}<a class="next" href="{{ root }}{{ next.href }}"><small>{{ t("related.next") }}</small><span>{{ next.title }}</span></a>{% endif %}
+  </div>
+  {% endif %}
+</nav>

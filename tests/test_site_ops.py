@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from ytbook import site_ops
+from t2k import site_ops
 
 AUTH_ERR = "\x1b[31m✘ \x1b[41;31m[ERROR]\x1b[0m A request to the Cloudflare API (/keys) failed.\n\n  Authentication error [code: 10000]\n"
 
@@ -67,7 +67,7 @@ scope = "위 어디에도 맞지 않음"
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     """임시 categories.toml 과 summaries/ 로 config 를 바꾼다."""
-    from ytbook import config
+    from t2k import config
     cats = tmp_path / "categories.toml"
     cats.write_text(CATS)
     summaries = tmp_path / "summaries"
@@ -80,7 +80,7 @@ def repo(tmp_path, monkeypatch):
 
 def summary(root, key, vid):
     from tests.test_summarize import FULL, TR
-    from ytbook.summarize import render, validate
+    from t2k.summarize import render, validate
     d = root / "summaries" / key
     d.mkdir(parents=True, exist_ok=True)
     s = validate({**json.loads(json.dumps(FULL)), "category": key}, short=False)
@@ -88,7 +88,7 @@ def summary(root, key, vid):
 
 
 def test_apply_create_move_delete_in_order(repo):
-    from ytbook import config
+    from t2k import config
     summary(repo, "0099_기타", "AAAAAAAAAAA")
     ops = [  # 키 순서대로 반영한다: 추가 → 이동 → 이전 카테고리 삭제
         {"key": "3", "type": "cat-delete", "cat": "0000"},
@@ -106,7 +106,7 @@ def test_apply_create_move_delete_in_order(repo):
 
 
 def test_apply_skips_invalid(repo):
-    from ytbook import config
+    from t2k import config
     logs = []
     ops = [{"key": "1", "type": "cat-create", "name": "요리", "scope": "중복"},
            {"key": "2", "type": "cat-create", "name": "a/b", "scope": "경로 문자"},

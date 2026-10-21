@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, rating_pill, life_pill %}
+{% block body %}
+<div class="doc">
+<nav class="crumbs" aria-label="{{ t("nav.crumbs") }}">
+  <a href="{{ root }}index.html">{{ t("nav.home") }}</a>{{ icon("chev", 14, "#5F6368") }}<a href="{{ root }}{{ c.href }}">{{ v.cat.name }}</a>
+</nav>
+
+<div class="dhead">
+  <h1>{{ v.title }}</h1>
+  <div class="pills lg">{{ rating_pill(v) }}{{ life_pill(v) }}<span class="pill c-gray">{{ t("sum.quality", q=v.quality_ko) }}</span></div>
+</div>
+
+<a class="player" href="{{ v.url }}" aria-label="{{ t("sum.play") }}" style="background-image: url('{{ v.thumb_large }}')">
+  <span class="play">{{ icon("play", 24) }}</span><span class="dur">{{ v.duration }}</span>
+</a>
+
+<dl class="meta">
+  <dt>{{ t("sum.channel") }}</dt><dd>{{ v.channel }}</dd>
+  <dt>{{ t("sum.published") }}</dt><dd class="mono">{{ v.published or "-" }}</dd>
+  <dt>{{ t("sum.summarized") }}</dt><dd class="mono">{{ v.summarized }}</dd>
+  <dt>{{ t("sum.source") }}</dt><dd><a href="{{ v.url }}" style="font-weight: 500">{{ v.url_label }}</a></dd>
+</dl>
+
+<section class="sec">
+  <h2>{{ t("sum.summary") }}</h2>
+  <p>{{ v.summary }}</p>
+</section>
+
+<section class="sec">
+  <h2>{{ t("sum.key_points") }}</h2>
+  <ol>{% for p in v.keyPoints %}<li>{{ p }}</li>{% endfor %}</ol>
+</section>
+
+{% if v.claims %}
+<section class="sec">
+  <h2>{{ t("sum.claims") }}</h2>
+  <p class="lead">{{ t("sum.claims_lead") }}</p>
+  <div class="rows">
+    {% for cl in v.claims %}
+    <div class="claim">
+      <span class="pills"><span class="pill {{ cl.ev_class }}">{{ label("evidence", cl.evidence) }}</span>{% if cl.flag %}<span class="pill c-amber">{{ t("sum.flag") }}</span>{% endif %}<a href="{{ cl.href }}">{{ cl.time }}</a></span>
+      <span class="text">{{ cl.text }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if v.personalInsight %}
+<section class="insight">
+  <span class="kicker">{{ t("sum.insight") }}</span>
+  <p>{{ v.personalInsight }}</p>
+</section>
+{% endif %}
+
+{% if v.actionableItems %}
+<section class="sec">
+  <h2>{{ t("sum.actions") }}</h2>
+  <ul class="todo">{% for a in v.actionableItems %}<li><span class="ck">{{ icon("check", 14) }}</span><span>{{ a }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if v.links %}
+<section class="sec">
+  <h2>{{ t("sum.links") }}</h2>
+  <p class="lead">{{ t("sum.links_lead") }}</p>
+  <div class="rows">
+    {% for x in v.links %}<a class="ts ext" href="{{ x.url }}" rel="noopener noreferrer"><span class="label">{{ x.label }}</span><span class="host">{{ x.host }}</span>{{ icon("ext", 16) }}</a>{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if v.timestamps %}
+<section class="sec">
+  <h2>{{ t("sum.timestamps") }}</h2>
+  <p class="lead">{{ t("sum.timestamps_lead") }}</p>
+  <div class="rows{% if v.ts_hms %} hms{% endif %}">
+    {% for t in v.timestamps %}<a class="ts" href="{{ t.href }}"><span class="t">{{ t.time }}</span><span>{{ t.topic }}</span></a>{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="sec">
+  <h2>{{ t("sum.watch_reason") }}</h2>
+  <p>{{ v.watchReason }}</p>
+</section>
+
+{% if v.categoryProposal %}
+<section class="sec">
+  <h2>{{ t("sum.proposal") }}</h2>
+  <p>{{ v.categoryProposal }}</p>
+  {% if v.proposal_href %}<div class="rm-row" style="margin-top: 12px"><a class="rm-btn" href="{{ root }}{{ v.proposal_href }}">{{ t("sum.proposal_create") }}</a></div>{% endif %}
+</section>
+{% endif %}
+
+<section class="tags">
+  {% for tag in v.tags %}<a class="tag" href="{{ root }}search.html?q={{ tag | urlencode }}">#{{ tag }}</a>{% endfor %}
+</section>
+
+{% include "_manage.html" %}
+{% include "_related.html" %}
+</div>
+{% endblock %}

@@ -1,7 +1,7 @@
 """파이프라인: 차단 시 쉬는 시간, 디스코드에 알릴 결과. YouTube · claude · git · 디스코드는 호출하지 않는다."""
 import json
 
-from ytbook import backlog, pipeline
+from t2k import backlog, pipeline
 
 
 def test_pause_escalates_and_resets(tmp_path):
@@ -28,5 +28,5 @@ def test_results_for_discord(tmp_path):
     (state / "removed.jsonl").write_text('{"video_id": "CCCCCCCCCCC"}\n')
     done, failed, removed = pipeline.results({"AAAAAAAAAAA", "BBBBBBBBBBB", "CCCCCCCCCCC", "DDDDDDDDDDD"}, summaries, st)
     assert done == {"AAAAAAAAAAA": {"title": "제목"}}
-    assert failed == {"BBBBBBBBBBB": "자막 없음"}
+    assert failed == {"BBBBBBBBBBB": "no_transcript"}  # 사유 코드. 표시 문구는 디스코드 쪽이 만든다
     assert removed == {"CCCCCCCCCCC"}

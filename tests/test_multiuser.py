@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from ytbook import config, pipeline, summarize
+from t2k import config, pipeline, summarize
 from tests.test_summarize import TR
 
 
@@ -141,7 +141,7 @@ def test_not_ready_user_is_not_deployed(root, monkeypatch):
 
 
 def test_worker_config(root):
-    from ytbook import deploy
+    from t2k import deploy
     c = deploy.worker_config(config.users()[1], root / "users/bob/site")
     assert c["name"] == "s" and c["preview_urls"] is False and c["workers_dev"] is True
     assert c["kv_namespaces"] == [{"binding": "OPS", "id": "kv-s"}]
@@ -150,8 +150,8 @@ def test_worker_config(root):
 
 def test_custom_layer_templates_css_rules(root):
     from datetime import datetime
-    from ytbook import site
-    from ytbook.summarize import KST
+    from t2k import site
+    from t2k.summarize import KST
     alice, sk = config.users()
     c = root / "users" / "bob"
     (c / "templates").mkdir(parents=True)
@@ -175,8 +175,8 @@ def test_custom_layer_templates_css_rules(root):
 def test_user_templates_are_sandboxed(root):
     from datetime import datetime
     from jinja2.exceptions import SecurityError
-    from ytbook import site
-    from ytbook.summarize import KST
+    from t2k import site
+    from t2k.summarize import KST
     sk = config.users()[1]
     t = root / "users" / "bob" / "templates"
     t.mkdir(parents=True)

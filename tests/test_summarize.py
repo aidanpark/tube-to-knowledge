@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-from ytbook import summarize, transcript
-from ytbook.summarize import SummaryError, extract_json, read_front_matter, render, validate
+from t2k import summarize, transcript
+from t2k.summarize import SummaryError, extract_json, read_front_matter, render, validate
 
 FULL = {
     "category": "0001_AI_개발도구", "categoryProposal": None,

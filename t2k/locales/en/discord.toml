@@ -1,0 +1,62 @@
+# Discord replies (English)
+# Keys live under discord. so they do not mix with site or summary text
+
+[discord.notify]
+done = "✅ {title}\n{category} · Rating {rating}/5\n{url}"
+failed = "❌ Could not summarize: {reason}"
+
+# Failure reasons (the reason values in backlog)
+[discord.failed]
+no_transcript = "No subtitles"
+unavailable = "Private or removed"
+format = "Summary format error"
+transient = "Temporary error"
+blocked = "Blocked by YouTube"
+
+[discord.agent]
+helper = "Assistant"
+no_answer = "I could not produce an answer."
+awaiting = "{answer}\n\nChanged files:\n{files}\nCheck: {result}\n\nReply \"approve\" to apply or \"cancel\" to discard. Reply to this message to continue the conversation; new requests are handled after you approve or cancel."
+failed = "Could not process the request: {error}"
+out_of_scope = "Files outside the allowed scope: {files}"
+site_check_failed = "Site build failed: {error}"
+site_check_ok = "Site builds"
+applied = "Applied. {note}"
+site_updated = "Your site is updated too: {url}"
+deploy_retry = "The site deploy failed; the pipeline will retry shortly."
+apply_failed = "Could not apply: {error}"
+cancelled = "Cancelled. The changes were discarded."
+claude_error = "Claude failed: {error}"
+git_error = "git {command} failed: {error}"
+merge_conflict = "Merge conflict: {error}"
+prompt = '''
+You are an assistant who maintains {name}'s video summary site. {name} sent the request below on Discord.
+
+Workspace:
+- mine/ : {name}'s files. Only these may be changed.
+  - profile.md : interests. Used for the personalized parts of each summary (watch recommendation, personal insight).
+  - rules.md : requests about how to summarize (e.g. list the ingredients for cooking videos). Added to the summary prompt.
+  - categories.toml : categories (id · name · scope). scope is the classification rule. Never delete category 0099 (the fallback category).
+    A new id is the current maximum + 1 (four digits). When a category is deleted, move its summaries to the 0099 folder under mine/summaries/
+    and update the category value in each file's front matter.
+  - summaries/ : {name}'s summaries (<category>/<date>_<video ID>.md). Change them only to move categories.
+  - templates/ : site template overrides. Copy a file with the same name from reference/site_templates/ and edit it; that file is then used.
+    Templates are rendered in a sandbox, so do not use expressions that reach into the internal attributes of Python objects.
+  - style.css : CSS appended to the site. See the variables and classes in reference/site_assets/style.css.
+- reference/ : default templates and CSS for reference. Changes there have no effect.
+
+Rules:
+- Do not change anything outside mine/. Other people's files and other files on this computer can be neither read nor changed.
+- If the request needs changes to the summary pipeline, the site generator code or server settings, do not change anything; answer that
+  this cannot be done here and the administrator has to do it.
+- Do not add external scripts (<script src>).
+- If it is a question, do not change files; just answer.
+- The final answer is sent to Discord as is: write 2-6 lines in polite, plain English describing what you changed (or answering the question).
+
+{history}Request:
+{text}'''
+history_head = '''
+Earlier conversation (the reply chain in the same channel, oldest first). Use it only for context; handle the last request:
+{lines}
+
+'''

@@ -4,9 +4,12 @@
 """
 import pytest
 
-from ytbook import config
+from t2k import config
 
 CONFIG = """
+[general]
+language = "ko"   # 기존 시험은 한국어 화면을 확인한다. 영어는 test_i18n.py
+
 [site]
 subdomain = "example"
 

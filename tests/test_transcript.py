@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-from ytbook import transcript, ytdlp_update
-from ytbook.transcript import TranscriptError, classify, parse_json3, pick_track
+from t2k import transcript, ytdlp_update
+from t2k.transcript import TranscriptError, classify, parse_json3, pick_track
 
 INFO = {
     "subtitles": {"en-eEY6OEpapPo": [], "ko-tgb1yGiJu6Y": [], "live_chat": []},

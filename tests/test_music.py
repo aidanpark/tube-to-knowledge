@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pytest
 
-from ytbook import site, summarize, transcript
-from ytbook.summarize import KST, SummaryError, build_prompt, render, validate
+from t2k import site, summarize, transcript
+from t2k.summarize import KST, SummaryError, build_prompt, render, validate
 from tests.test_summarize import TR
 
 MUSIC = {"kind": "music", "category": "0010_음악", "categoryProposal": None, "artist": "이승윤", "song": "솔로",

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="page-title">
+  <h1>{{ t("failed.title") }}</h1>
+  {% if failed %}<p>{{ tn("failed.lead", failed | length) }}</p>{% endif %}
+</div>
+<section class="sec" style="padding-top: 12px">
+  {% if failed %}
+  <div class="rows">
+    {% for f in failed %}
+    <a class="vrow" href="https://www.youtube.com/watch?v={{ f.video_id }}">
+      <span class="title">{{ f.title or f.video_id }}</span>
+      <span class="pills"><span class="pill c-amber">{{ f.reason_ko }}</span><span class="when">{{ f.time[:10] }}</span></span>
+    </a>
+    {% endfor %}
+  </div>
+  <p class="lead" style="margin: 16px 0 0">{{ t("failed.manual") }}</p>
+  <code class="cmd">t2k summarize VIDEO_ID --transcript FILE</code>
+  {% else %}
+  <div class="empty"><b>{{ t("failed.empty") }}</b></div>
+  {% endif %}
+</section>
+<div class="spacer"></div>
+{% endblock %}

@@ -1,7 +1,7 @@
 [project]
-name = "ytbook"
+name = "tube-to-knowledge"
 version = "0.1.0"
-description = "디스코드에 YouTube 링크를 올리면 Claude 가 요약해 나만의 요약 사이트(Cloudflare Workers)에 정리한다"
+description = "Turn the knowledge flowing through YouTube into a personal archive: share a link to Discord, get a Claude summary on your own private site."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
@@ -12,10 +12,13 @@ dependencies = [
 ]
 
 [project.scripts]
-ytbook = "ytbook.cli:main"
+t2k = "t2k.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["t2k"]   # 프로젝트 이름(tube-to-knowledge)과 패키지 폴더(t2k)가 다르다
 
 [build-system]
 requires = ["hatchling"]

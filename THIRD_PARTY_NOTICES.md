@@ -2,7 +2,7 @@
 
 ## smykla-skalski/sai — youtube-summary `fetch_transcript.py`
 
-`ytbook/transcript.py` follows the output contract of `fetch_transcript.py` from
+`t2k/transcript.py` follows the output contract of `fetch_transcript.py` from
 https://github.com/smykla-skalski/sai (one JSON object, `status` ok|error, exit code 0 success · 1 transcript failure ·
 2 invalid input). The code itself was written independently.
 

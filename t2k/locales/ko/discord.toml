@@ -1,0 +1,62 @@
+# 디스코드 답장 (한국어)
+# 키는 discord. 아래에 둔다 (사이트 · 요약 문구와 섞이지 않게)
+
+[discord.notify]
+done = "✅ {title}\n{category} · 별점 {rating}/5\n{url}"
+failed = "❌ 요약하지 못했습니다: {reason}"
+
+# 실패 사유 (backlog 의 reason 값)
+[discord.failed]
+no_transcript = "자막 없음"
+unavailable = "비공개 · 삭제"
+format = "요약 형식 오류"
+transient = "일시 오류"
+blocked = "YouTube 차단"
+
+[discord.agent]
+helper = "도우미"
+no_answer = "답을 만들지 못했습니다."
+awaiting = "{answer}\n\n바뀐 파일:\n{files}\n확인: {result}\n\n적용하려면 「승인」, 버리려면 「취소」라고 써 주세요. 이 답장에 답장하면 대화를 이어 갈 수 있고, 새 요청은 「승인」 또는 「취소」 뒤에 처리합니다."
+failed = "처리하지 못했습니다: {error}"
+out_of_scope = "허용 범위 밖의 파일: {files}"
+site_check_failed = "사이트 생성 실패: {error}"
+site_check_ok = "사이트 생성 확인"
+applied = "적용했습니다. {note}"
+site_updated = "사이트에도 반영했습니다: {url}"
+deploy_retry = "사이트 배포는 실패해서 파이프라인이 곧 다시 시도합니다."
+apply_failed = "적용하지 못했습니다: {error}"
+cancelled = "취소했습니다. 바꾼 내용은 버렸습니다."
+claude_error = "claude 실패: {error}"
+git_error = "git {command} 실패: {error}"
+merge_conflict = "합치기 충돌: {error}"
+prompt = '''
+당신은 {name} 님의 영상 요약 사이트를 손보는 도우미다. {name} 님이 디스코드로 아래 요청을 보냈다.
+
+작업 공간:
+- mine/ : {name} 님의 파일. 여기만 고칠 수 있다.
+  - profile.md : 관심사. 요약의 개인화 항목(시청 권유 · 나에게 주는 의미)에 쓰인다.
+  - rules.md : 요약 방식에 대한 요청 (예: 요리 영상은 재료 목록을 정리). 요약할 때 프롬프트에 들어간다.
+  - categories.toml : 카테고리 (id · name · scope). scope 는 분류 기준이다. 0099 기타는 지우지 않는다.
+    새 id 는 기존 최대값 + 1 (네 자리). 카테고리를 지우면 그 폴더의 요약은 mine/summaries/0099_기타/ 로 옮기고
+    파일 앞머리의 category 값도 바꾼다.
+  - summaries/ : {name} 님의 요약 (<카테고리>/<날짜>_<동영상ID>.md). 카테고리를 옮길 때만 고친다.
+  - templates/ : 사이트 템플릿 덮어쓰기. reference/site_templates/ 의 같은 이름 파일을 복사해 고치면 그 파일이 쓰인다.
+    템플릿은 샌드박스에서 렌더링되므로 파이썬 객체의 내부 속성에 접근하는 표현은 쓰지 않는다.
+  - style.css : 사이트에 덧붙는 CSS. reference/site_assets/style.css 의 변수 · 클래스를 참고한다.
+- reference/ : 참고용 기본 템플릿과 CSS. 고쳐도 적용되지 않는다.
+
+규칙:
+- mine/ 밖은 고치지 않는다. 다른 사람의 자료와 이 컴퓨터의 다른 파일은 볼 수도 고칠 수도 없다.
+- 요약 파이프라인 · 사이트 생성 코드 · 서버 설정을 바꿔야 하는 요청이면 고치지 말고, 이 기능으로는 할 수 없어
+  관리자가 직접 해야 한다고 답한다.
+- 외부 스크립트(<script src>)를 넣지 않는다.
+- 질문이면 파일을 고치지 말고 답만 한다.
+- 마지막 답은 디스코드에 그대로 보낸다: 한국어 존댓말로 바꾼 내용(또는 질문의 답)을 2~6줄로 쓴다.
+
+{history}요청:
+{text}'''
+history_head = '''
+이전 대화 (같은 채널의 답장 사슬, 오래된 것부터). 맥락을 이해하는 데에만 쓰고, 처리할 것은 마지막 요청이다:
+{lines}
+
+'''

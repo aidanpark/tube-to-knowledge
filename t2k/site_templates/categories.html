@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="page-title">
+  <h1>{{ t("cats.title") }}</h1>
+  <p>{{ t("cats.lead", total=total, n=cats | length) }}</p>
+</div>
+<div class="clist">
+  {% for c in cats %}
+  <a class="ccard {{ c.bg_class }}{% if not c.count %} zero{% endif %}" href="{{ c.href }}" data-cat-id="{{ c.cat.id }}">
+    <span class="top"><span class="id" style="color: {{ c.fg }}">{{ c.cat.id }}</span><span class="n">{{ tn("count.videos", c.count) }}{% if c.week_count %}{{ t("count.this_week", n=c.week_count) }}{% endif %}</span></span>
+    <span class="name">{{ c.cat.name }}</span>
+    <span class="scope">{{ c.cat.scope }}</span>
+  </a>
+  {% endfor %}
+</div>
+<div class="clist" data-pending-cats style="padding-top: 0"></div>
+
+{# 새 카테고리. 설명은 요약할 때 Claude 가 분류하는 기준이 된다. 실제 추가는 집 컴퓨터가 한다 (site_ops) #}
+<section class="manage cat-new" id="new">
+  <h2>{{ t("cats.new") }}</h2>
+  <form data-cat-new>
+    <label>{{ t("cats.name") }}<input name="name" maxlength="20" required autocomplete="off" placeholder="{{ t("cats.name_ph") }}"></label>
+    <label>{{ t("cats.scope") }}<textarea name="scope" maxlength="150" rows="3" required placeholder="{{ t("cats.scope_ph") }}"></textarea></label>
+    <p>{{ t("cats.help") }}</p>
+    <div class="rm-row"><button type="submit" class="rm-btn primary">{{ t("cats.create") }}</button></div>
+  </form>
+  <p class="rm-msg" role="status"></p>
+</section>
+<div class="spacer"></div>
+{% endblock %}

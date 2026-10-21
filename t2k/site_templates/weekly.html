@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block body %}
+<div class="doc">
+<nav class="crumbs" aria-label="{{ t("nav.crumbs") }}">
+  <a href="{{ root }}weeks.html">{{ t("nav.weeks") }}</a>{{ icon("chev", 14, "#5F6368") }}<span class="here">{{ w.label }} · {{ w.cat_name }}</span>
+</nav>
+
+<section class="hero" style="margin-top: 12px">
+  <span class="eyebrow">{{ t("weekly.eyebrow", label=w.year_label) }}</span>
+  <h1>{{ w.cat_name }}</h1>
+  <p>{{ tn("weekly.based_on", w.count, range=w.range_long) }}</p>
+  <div class="btns">
+    {% if prev %}<a class="btn-line" href="{{ root }}{{ prev.href }}">{{ icon("back", 18) }}{{ prev.label }}</a>{% endif %}
+    {% if next %}<a class="btn-line" href="{{ root }}{{ next.href }}" style="padding: 0 10px 0 16px">{{ next.label }}{{ icon("chev", 18) }}</a>{% endif %}
+    {% if c %}<a class="btn" href="{{ root }}{{ c.href }}" style="margin-top: 0; height: 40px; padding: 0 16px; font-size: 14px">{{ t("weekly.view_category") }}</a>{% endif %}
+  </div>
+</section>
+
+<section class="sec">
+  <h2 class="wk-title">{{ w.headline }}</h2>
+  <div class="hl-list">
+    {% for h in w.highlights %}<div class="hl"><span class="n">{{ loop.index }}</span><span>{{ h }}</span></div>{% endfor %}
+  </div>
+</section>
+
+{% if w.merged_views %}
+<section class="sec">
+  <h2>{{ t("weekly.merged") }}</h2>
+  <div class="cards">
+    {% for g in w.merged_views %}
+    <div class="merge">
+      <span class="kicker">{{ t("weekly.merged_kicker", n=g.refs | length) }}</span>
+      <span class="t">{{ g.title }}</span>
+      <p>{{ g.summary }}</p>
+      <span class="refs">{% for r in g.refs %}{% if r.href %}<a href="{{ root }}{{ r.href }}">{{ r.title }}</a>{% else %}<span>{{ r.title }}</span>{% endif %}{% endfor %}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if w.shorts_views %}
+<section class="sec">
+  <h2>{{ t("weekly.shorts") }}</h2>
+  <div class="cards">
+    {% for g in w.shorts_views %}
+    <div class="merge plain">
+      <span class="pills"><span class="pill c-brand">{{ t("weekly.shorts_pill", n=g.refs | length) }}</span></span>
+      <span class="t">{{ g.title }}</span>
+      <p>{{ g.summary }}</p>
+      <span class="refs">{% for r in g.refs %}{% if r.href %}<a href="{{ root }}{{ r.href }}">{{ r.title }}</a>{% else %}<span>{{ r.title }}</span>{% endif %}{% endfor %}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if w.changes %}
+<section class="sec">
+  <h2>{{ t("weekly.changes") }}</h2>
+  {% if w.previous_label %}<p class="lead">{{ t("weekly.compared", label=w.previous_label) }}</p>{% endif %}
+  <div class="rows">
+    {% for ch in w.changes %}
+    <div class="claim"><span class="pills"><span class="pill {{ 'c-sky' if ch.kind == '새로움' else 'c-amber' }}">{{ label("change", ch.kind) }}</span></span><span class="text">{{ ch.text }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if w.pick_views %}
+<section class="sec">
+  <h2>{{ t("weekly.picks") }}</h2>
+  <div class="cards">
+    {% for p in w.pick_views %}
+    {% set r = p.ref %}
+    <a class="vcard" {% if r.href %}href="{{ root }}{{ r.href }}"{% endif %}>
+      <div class="row">
+        {% if r.v %}<div class="thumb sm"><img src="{{ r.v.thumb }}" alt="" loading="lazy">{% if r.duration %}<span class="dur">{{ r.duration }}</span>{% endif %}</div>{% endif %}
+        <span style="display: flex; flex-direction: column; gap: 6px"><span class="title">{{ r.title }}</span><span class="pills"><span class="pill {{ 'c-lime' if r.rating >= 4 else 'c-gray' }}">★ {{ r.rating }}</span></span></span>
+      </div>
+      <span class="sum">{{ p.reason }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="sec" style="padding-bottom: 32px">
+  <h2 style="margin-bottom: 12px">{{ tn("weekly.list", w.count) }}</h2>
+  <div class="rows">
+    {% for r in w.video_views %}
+    {% if r.href %}<a class="link" href="{{ root }}{{ r.href }}">{% else %}<div class="link">{% endif %}
+      <span class="wk-row">{% if r.short %}<span class="pill c-brand">Shorts</span>{% endif %}<span class="tt">{{ r.title }}</span></span>
+      <span class="wk-star{% if r.rating >= 4 %} hi{% endif %}">★ {{ r.rating }}</span>
+    {% if r.href %}</a>{% else %}</div>{% endif %}
+    {% endfor %}
+  </div>
+</section>
+</div>
+{% endblock %}

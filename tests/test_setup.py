@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from ytbook import config, service, setup
+from t2k import config, service, setup
 
 
 def test_settings_merge_and_site_url(data):
@@ -78,20 +78,20 @@ def test_access_protected(monkeypatch):
 
 def test_launchd_plist(data):
     p = service.plist("pipeline")
-    assert p["Label"] == service.label("pipeline") and p["Label"].endswith(".ytbook.pipeline")
-    assert p["ProgramArguments"] == [sys.executable, "-m", "ytbook", "pipeline"]
-    assert p["EnvironmentVariables"]["YTBOOK_HOME"] == str(data) and p["StartInterval"] == 60
+    assert p["Label"] == service.label("pipeline") and p["Label"].endswith(".t2k.pipeline")
+    assert p["ProgramArguments"] == [sys.executable, "-m", "t2k", "pipeline"]
+    assert p["EnvironmentVariables"]["T2K_HOME"] == str(data) and p["StartInterval"] == 60
     assert service.plist("bot")["KeepAlive"] is True
     plistlib.dumps(p)  # 형식 확인
 
 
 def test_check_site_runs_in_subprocess(data):
     """agent 가 지시를 적용하기 전에 쓰는 확인: 데이터 폴더를 환경 변수로 받아 사이트를 생성한다."""
-    env = {**os.environ, "YTBOOK_HOME": str(data)}
-    p = subprocess.run([sys.executable, "-m", "ytbook", "check-site", "bob"], capture_output=True, text=True, env=env)
+    env = {**os.environ, "T2K_HOME": str(data)}
+    p = subprocess.run([sys.executable, "-m", "t2k", "check-site", "bob"], capture_output=True, text=True, env=env)
     assert p.returncode == 0, p.stderr
     (data / "users/bob/categories.toml").write_text("깨진 파일")
-    p = subprocess.run([sys.executable, "-m", "ytbook", "check-site", "bob"], capture_output=True, text=True, env=env)
+    p = subprocess.run([sys.executable, "-m", "t2k", "check-site", "bob"], capture_output=True, text=True, env=env)
     assert p.returncode != 0
 
 

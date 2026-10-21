@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from ytbook import agent, config, discord_inbox
+from t2k import agent, config, discord_inbox
 
 def msg(mid, author, content):
     return {"id": mid, "author": {"id": author, "username": author}, "content": content, "embeds": []}
@@ -65,12 +65,12 @@ def test_scope_ok(users):
     alice, sk = users
     assert agent.scope_ok(["users/bob/style.css", "users/bob/templates/home.html",
                            "users/bob/summaries/0099_기타/a.md", "users/bob/categories.toml"], sk)
-    assert not agent.scope_ok(["users/bob/style.css", "ytbook/site.py"], sk)
+    assert not agent.scope_ok(["users/bob/style.css", "t2k/site.py"], sk)
     assert not agent.scope_ok(["users/bob/state/inbox.jsonl"], sk)
     assert not agent.scope_ok(["users/alice/rules.md"], sk)
     # 앨리스의 지시도 앨리스 사이트의 파일뿐이다: 코드 · 설정 · 다른 사람 자료는 안 된다
     assert agent.scope_ok(["users/alice/rules.md", "users/alice/categories.toml", "users/alice/summaries/0001_AI/a.md"], alice)
-    assert not agent.scope_ok(["ytbook/site.py"], alice)
+    assert not agent.scope_ok(["t2k/site.py"], alice)
     assert not agent.scope_ok(["config.toml"], alice)
     assert not agent.scope_ok(["users/alice/state/inbox.jsonl"], alice)
     assert not agent.scope_ok(["users/bob/style.css"], alice)
@@ -137,7 +137,7 @@ def test_family_task_awaits_then_applies(repo, users, monkeypatch):
     real_git = agent._git
     monkeypatch.setattr(agent, "_git", lambda *a, **k: "" if a[0] == "push" else real_git(*a, **k))
     calls = []
-    monkeypatch.setattr(agent, "_ytbook", lambda *a, **k: calls.append(a) or subprocess.CompletedProcess(a, 0, "", ""))
+    monkeypatch.setattr(agent, "_t2k", lambda *a, **k: calls.append(a) or subprocess.CompletedProcess(a, 0, "", ""))
     agent.apply(task, dc)
     assert task["status"] == "applied", task.get("error")
     assert calls == [("redeploy", "bob")]

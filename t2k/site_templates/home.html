@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, vcard %}
+{% block body %}
+{% for n in notices %}
+<div class="banner" role="status">{{ n }}</div>
+{% endfor %}
+{% if failed_count %}
+<div class="banner" role="status"><a href="failed.html">{{ tn("home.failed", failed_count) }}</a></div>
+{% endif %}
+
+<section class="hero">
+  <span class="eyebrow">{{ t("home.eyebrow", label=week.label, range=week.range) }}</span>
+  {% if week_docs %}
+  <h1>{{ tn("home.weekly_ready", week_docs | length) }}</h1>
+  <p>{{ week_docs | map(attribute="cat.name") | join(" · ") }}.</p>
+  <a class="btn" href="weeks.html">{{ t("home.view_weekly") }} {{ icon("arrow", 18) }}</a>
+  {% else %}
+  <h1>{{ tn("home.this_week", week_items | length) }}</h1>
+  <p>{% if week_cats %}{{ week_cats | join(" · ") }}. {% endif %}{{ t("home.weekly_note") }}</p>
+  <a class="btn" href="categories.html">{{ t("home.view_categories") }} {{ icon("arrow", 18) }}</a>
+  {% endif %}
+</section>
+
+{% if recent %}
+<div class="chips" role="group" aria-label="{{ t("filter.aria") }}" data-filter-group>
+  <button type="button" class="chip" aria-pressed="true" data-filter="all">{{ t("filter.all") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-filter="top">{{ t("filter.top") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-filter="long">{{ t("filter.long") }}</button>
+  <button type="button" class="chip" aria-pressed="false" data-filter="short">Shorts</button>
+</div>
+{% endif %}
+
+<section class="sec">
+  <div class="sec-head">
+    <h2>{{ t("home.recent") }}</h2>
+    <a class="more" href="search.html">{{ t("home.see_all") }} {{ icon("chev") }}</a>
+  </div>
+  {% if recent %}
+  <div class="cards wide" data-filter-target>
+    {% for v in recent %}{{ vcard(v, root) }}{% endfor %}
+  </div>
+  <div class="empty" data-filter-empty hidden><b>{{ t("empty.no_match") }}</b>{{ t("empty.no_match_body") }}</div>
+  {% else %}
+  <div class="empty"><b>{{ t("empty.no_summaries") }}</b>{{ t("home.empty_body") }}</div>
+  {% endif %}
+</section>
+
+{% if top_cats %}
+<section class="sec">
+  <div class="sec-head">
+    <h2>{{ t("home.categories") }}</h2>
+    <a class="more" href="categories.html">{{ t("home.all") }} {{ icon("chev") }}</a>
+  </div>
+  <div class="grid2 wide">
+    {% for c in top_cats %}
+    <a class="ctile {{ c.bg_class }}" href="{{ c.href }}"><span class="name">{{ c.cat.name }}</span><span class="n">{{ tn("count.videos", c.count) }}{% if c.week_count %}{{ t("count.this_week", n=c.week_count) }}{% endif %}</span></a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+<div class="spacer"></div>
+{% endblock %}
+{% block scripts %}<script src="assets/filter.js?v={{ build_id }}"></script>{% endblock %}
