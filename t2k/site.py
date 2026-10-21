@@ -18,7 +18,7 @@ from jinja2 import FileSystemLoader, select_autoescape
 from jinja2.sandbox import SandboxedEnvironment
 
 from . import config, i18n, weekly
-from .summarize import KST, read_front_matter, time_link
+from .summarize import now as local_now, read_front_matter, time_link
 
 HERE = Path(__file__).parent
 TEMPLATES = HERE / "site_templates"
@@ -221,7 +221,7 @@ def build(src: Path | None = None, out: Path | None = None, state: Path | None =
     weekly_dir = weekly_dir or src.parent / "weekly"
     out = out or config.path("site")
     state = state or config.path("state")
-    now = now or datetime.now(KST)
+    now = now or local_now()
 
     items = load_summaries(src) if src.exists() else []
     week = week_of(now.date())

@@ -3,10 +3,13 @@ import json
 from datetime import datetime
 
 import pytest
+from zoneinfo import ZoneInfo
 
 from t2k import site, summarize, transcript
-from t2k.summarize import KST, SummaryError, build_prompt, render, validate
+from t2k.summarize import SummaryError, build_prompt, render, validate
 from tests.test_summarize import TR
+
+KST = ZoneInfo("Asia/Seoul")  # 시험의 고정 시각용. 프로그램은 이 맥의 현지 시간대를 쓴다
 
 MUSIC = {"kind": "music", "category": "0010_음악", "categoryProposal": None, "artist": "이승윤", "song": "솔로",
          "songs": [], "album": "꿈의 거처", "releaseYear": 2021, "format": "라이브",

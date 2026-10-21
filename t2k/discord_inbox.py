@@ -30,12 +30,15 @@ SEEN, DONE, FAILED = "👀", "✅", "❌"
 
 class DiscordError(Exception):
     def __init__(self, status: int, message: str):
-        super().__init__(f"{status}: {message}")
+        super().__init__(message if status == 0 else f"{status}: {message}")  # 0: HTTP 응답이 아닌 오류 (토큰 파일 등)
         self.status = status
 
 
-def load_token(path: Path = TOKEN_FILE) -> str:
-    if os.environ.get("DISCORD_BOT_TOKEN"):
+def load_token(path: Path | None = None, use_env: bool = True) -> str:
+    """봇 토큰. 환경 변수 DISCORD_BOT_TOKEN 이 먼저이고, 없으면 토큰 파일. doctor 는 자동 실행처럼 파일만 읽는다(use_env=False).
+    path 의 기본값은 호출할 때의 TOKEN_FILE 이다 (시험에서 바꿀 수 있게 정의할 때 고정하지 않는다)."""
+    path = path or TOKEN_FILE
+    if use_env and os.environ.get("DISCORD_BOT_TOKEN"):
         return os.environ["DISCORD_BOT_TOKEN"].strip()
     if not path.exists():
         raise DiscordError(0, t("token.no_file", path=path))
@@ -128,19 +131,19 @@ def check(channel_id: str, react: bool = False, log=print) -> int:
     """토큰 · 권한 확인: 봇 이름과 채널의 최근 메시지를 표시한다. react 면 링크가 있는 최근 메시지에 👀 를 단다."""
     dc = Discord(load_token())
     bot = dc.me()
-    log(f"봇: {bot['username']} ({bot['id']})")
+    log(t("cli.check_bot", name=bot["username"], id=bot["id"]))
     recent = dc.messages(channel_id, limit=10)  # after 없이 최근 10건
-    log(f"최근 메시지 {len(recent)}건")
+    log(t("cli.check_recent", n=len(recent)))
     for m in recent:
         body = (m.get("content") or "").replace("\n", " ")[:60]
-        log(f"  {m['id']} {m['author']['username']}: {body!r} 링크 {video_ids(m)}")
+        log(t("cli.check_message", id=m["id"], author=m["author"]["username"], body=body, links=video_ids(m)))
     others = [m for m in recent if m["author"]["id"] != bot["id"]]
     if others and not any(m.get("content") or m.get("embeds") for m in others):
-        log("  본문이 모두 비어 있다: Message Content Intent 가 꺼져 있을 수 있다")
+        log(t("cli.check_empty"))
     found = [m for m in recent if not is_bot_reply(m, bot["id"]) and video_ids(m)]
     if react and found:
         dc.react(channel_id, found[-1]["id"], SEEN)
-        log(f"반응 {SEEN}: {found[-1]['id']}")
+        log(t("cli.check_react", mark=SEEN, id=found[-1]["id"]))
     return 0
 
 

@@ -1,6 +1,6 @@
 """주간 요약: 한 주(월~일) 동안 요약한 영상을 카테고리별로 묶어 Claude 로 정리한다.
 
-일정: 매주 일요일 24:00(월요일 0시, KST)이 지나면 파이프라인이 지난주의 주간 요약을 만든다 (pipeline 의 주간 요약 단계).
+일정: 매주 일요일 24:00(월요일 0시, 이 맥의 현지 시간)이 지나면 파이프라인이 지난주의 주간 요약을 만든다 (pipeline 의 주간 요약 단계).
 한 주기에 한 건씩 만들고, 영상 요약 대기열이 비어 있을 때만 실행한다. 맥이 꺼져 있었으면 켜진 뒤의 주기에서 만든다.
 지난주만 만든다: 그보다 오래된 주는 `t2k weekly <YYYY-Www>` 로 직접 만든다.
 
@@ -19,7 +19,7 @@ from pathlib import Path
 
 from . import config, i18n
 from .i18n import t
-from .summarize import KST, TOKENS, SummaryError, call_claude, extract_json, prompt_file
+from .summarize import now as local_now, TOKENS, SummaryError, call_claude, extract_json, prompt_file
 
 CHANGE_KINDS = ("새로움", "대체됨")
 CHANGE_TOKENS = {"en": {"new": "새로움", "replaced": "대체됨"}}  # 모델이 쓰는 표기 → 저장 코드
@@ -39,8 +39,9 @@ def week_dates(key: str) -> tuple[date, date]:
 
 
 def last_week(now: datetime) -> str:
-    """now 기준으로 끝난 가장 최근 주. 월요일 0시가 지나면 바로 앞 주가 된다."""
-    return week_key(now.astimezone(KST).date() - timedelta(days=7))
+    """now(현지 시각) 기준으로 끝난 가장 최근 주. 월요일 0시가 지나면 바로 앞 주가 된다.
+    now 의 날짜를 그대로 쓴다: 시간대 변환은 호출하는 쪽이 한다 (파이프라인은 현지 시각을 넘긴다)."""
+    return week_key(now.date() - timedelta(days=7))
 
 
 def doc_path(key: str, cat_id: str) -> Path:
@@ -195,7 +196,7 @@ def generate(key: str, cat: config.Category, vids: list[dict], attempts: int = 2
     mon, sun = week_dates(key)
     doc = {
         "week": key, "category": cat.key, "cat_id": cat.id, "cat_name": cat.name,
-        "range": [mon.isoformat(), sun.isoformat()], "generated": datetime.now(KST).isoformat(timespec="seconds"),
+        "range": [mon.isoformat(), sun.isoformat()], "generated": local_now().isoformat(timespec="seconds"),
         "previous": prev["week"] if prev else None,
         # 영상 목록을 함께 남긴다: 나중에 요약을 지우거나 옮겨도 그 주에 무엇을 정리했는지 남는다
         "videos": [{"id": v["video_id"], "title": v.get("title", ""), "short": v["short"],

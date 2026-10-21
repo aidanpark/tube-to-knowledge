@@ -42,7 +42,7 @@ brew install uv yt-dlp deno node git
 
 **[agent]** Check `claude --version`.
 
-**[person]** If Claude Code is missing or signed out, the person installs it (https://claude.com/claude-code) and runs `claude` once to sign in.
+**[person]** If Claude Code is missing or signed out, the person installs it (https://claude.com/claude-code) and runs `claude` once to sign in (`/login`). An `ANTHROPIC_API_KEY` exported in the shell is not enough: the background jobs do not see shell variables. `t2k doctor` checks Claude with the background jobs' environment.
 
 ## Step 2 — Code and data folder
 
@@ -57,9 +57,9 @@ echo 'alias t2k="$HOME/tube-to-knowledge/.venv/bin/t2k"' >> ~/.zshrc
 Use `~/tube-to-knowledge/.venv/bin/t2k` directly in your own commands, because the alias only works in new shells.
 
 - For a data folder other than `~/t2k-data`, add `export T2K_HOME=<folder>` to `~/.zshrc` and set `T2K_HOME` in your own commands too.
-- For Korean, run `T2K_LANG=ko t2k init`; otherwise run `t2k init`. Then make sure `config.toml` in the data folder has `[general] language = "<en|ko>"`.
+- For Korean, run `T2K_LANG=ko t2k init` (it writes `[general] language = "ko"` and Korean comments); otherwise run `t2k init` (English). After that, `config.toml` decides the language and `T2K_LANG` is ignored. Settle the language now: each person's first category and interests file are created in it during step 6.
 - If `t2k init` cannot commit, ask the person for the name and email to use with `git config --global user.name` / `user.email`.
-- If they want a backup, the person creates a **private** repository; you add it with `git -C <data folder> remote add origin <url>`.
+- If they want a backup, the person creates a **private** repository; you add it with `git -C <data folder> remote add origin <url>`. Then the person runs `git -C <data folder> push -u origin main` once in their own terminal, so git stores their credentials. The background jobs cannot answer a password prompt; if git cannot push without one, summaries are saved but not published. t2k sets the upstream on its first push by itself, and `t2k doctor` warns while it is missing.
 
 **Check:** `t2k doctor` shows ✓ in the **Tools** and **Data folder** sections, except the workers.dev subdomain and people, which come later.
 
@@ -69,7 +69,7 @@ Use `~/tube-to-knowledge/.venv/bin/t2k` directly in your own commands, because t
 
 1. Create a server if they do not have one (**+** on the left → Create My Own).
 2. Turn on Settings → Advanced → **Developer Mode**.
-3. Create one **private channel** per person (for example `archive-alice`) and invite family members. Duplicating the first channel keeps the private setting.
+3. Invite family members to the server, then create one **private channel** per person (for example `archive-alice`) with that person and the bot in it, and allow the person Read Message History · Embed Links · Add Reactions. Duplicating the first channel keeps the private setting.
 4. Give you each channel's **Channel ID** and the **User ID** of everyone who may make requests in it (right-click → Copy ID). IDs are not secrets.
 
 ## Step 4 — Discord bot
@@ -81,7 +81,7 @@ Use `~/tube-to-knowledge/.venv/bin/t2k` directly in your own commands, because t
 3. **Reset Token** → **Copy**. Then the person **types** (does not paste) this in their own terminal, which saves the clipboard to the token file and clears the clipboard:
    ```sh
    mkdir -p ~/.config/t2k
-   umask 077; printf 'DISCORD_BOT_TOKEN=%s\n' "$(pbpaste)" > ~/.config/t2k/discord.env; pbcopy < /dev/null
+   (umask 077; printf 'DISCORD_BOT_TOKEN=%s\n' "$(pbpaste)" > ~/.config/t2k/discord.env); pbcopy < /dev/null
    ```
 4. **OAuth2 → URL Generator** → scope **bot** → permissions **View Channels · Send Messages · Read Message History · Add Reactions · Embed Links** → open the URL → choose the server. Then add the bot to each private channel.
 
@@ -97,10 +97,9 @@ npx --yes wrangler@4.147.0 login
 
 **[person]** The person opens the Cloudflare dashboard → **Workers & Pages** and tells you the account's workers.dev subdomain (they choose one if asked).
 
-**[agent]** Put it in the data folder's `config.toml`:
+**[agent]** In the data folder's `config.toml`, fill in the existing `subdomain = ""` line under `[site]` (written by `t2k init`). Do not append a second `[site]` table; that makes every command fail with "Cannot read …config.toml":
 
 ```toml
-[site]
 subdomain = "<subdomain>"
 ```
 
@@ -114,7 +113,7 @@ subdomain = "<subdomain>"
 t2k user add --id <id> --name "<name>" --channel <channel ID> --owner <their user ID> --owner <admin user ID>
 ```
 
-This creates the person's folder, the site's edit queue (KV) and a placeholder site at `https://<id>-yt.<subdomain>.workers.dev`. No summaries are published yet.
+This creates the person's folder, the site's edit queue (KV) and a placeholder site at `https://<id>-yt.<subdomain>.workers.dev`. No summaries are published yet. If it stops halfway (wrangler signed out, placeholder deploy failed), fix the cause and run the same command again; it continues from the recorded entry. If a channel or owner ID turns out to be wrong, edit that person's `[[user]]` entry in `config.toml` (after step 9, also run `t2k service install` so the always-on bot reloads it).
 
 **Check:** `t2k doctor` shows the person under **Data folder**, `✓ <id>: can read channel …` under **Discord**, and their KV under **Cloudflare**. It also shows `<id>: not opened yet (ready = false)`, which is expected until step 8.
 
@@ -136,7 +135,7 @@ Wait until the person confirms this for every site.
 t2k user ready <id>
 ```
 
-It publishes the archive only after confirming the redirect to the Access sign-in.
+It publishes the archive only after confirming the redirect to the Access sign-in, and it discards any site edits that were queued before Access was in place.
 
 **Check:** the **Cloudflare** section of `t2k doctor` shows `✓ <id>: https://… 302 → Access login` for every site. **If it reports `The site opens without Access!`, stop and have the person fix Access before doing anything else.**
 
@@ -154,6 +153,6 @@ t2k service install
 
 **[person]** In the YouTube app, the person shares a video to their Discord channel.
 
-**[agent]** Watch `~/Library/Logs/t2k/pipeline.log` (these logs are currently in Korean). Within a minute the message gets 👀; a few minutes later the bot replies with ✅ and the summary link. Opening the link asks the person to sign in through Access.
+**[agent]** Watch `~/Library/Logs/t2k/pipeline.log` (these logs are currently in Korean). Times follow the Mac's time zone; weekly reviews run after Sunday midnight local time. Within a minute the message gets 👀; a few minutes later the bot replies with ✅ and the summary link. Opening the link asks the person to sign in through Access.
 
 If something fails, use the Troubleshooting table in the [README](README.md#troubleshooting). When everything works, give the person a short summary: their site addresses, how to save a video, how to make a request, and that `t2k doctor` is the first thing to run when something looks wrong.

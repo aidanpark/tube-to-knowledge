@@ -14,26 +14,38 @@ from pathlib import Path
 
 import requests
 
-from . import config, deploy, i18n, site
+from . import config, deploy, i18n, site, site_ops
 from .i18n import t
 from .site_ops import ANSI, WRANGLER
 
-GITIGNORE = """# 생성물 · 처리 상태 · 자막은 커밋하지 않는다
+# init 이 만드는 파일. 주석은 init 의 언어(T2K_LANG, 없으면 영어)로 쓴다
+GITIGNORE = {
+    "ko": """# 생성물 · 처리 상태 · 자막은 커밋하지 않는다
 users/*/site/
 users/*/state/
 state/
 transcripts/
 .DS_Store
-"""
+""",
+    "en": """# Generated sites, processing state and captions are not committed
+users/*/site/
+users/*/state/
+state/
+transcripts/
+.DS_Store
+""",
+}
 
-CONFIG = """# t2k 설정. 기본값은 t2k/defaults.toml 에 있고, 같은 표 · 키를 여기에 쓰면 덮어쓴다.
+CONFIG = {
+    "ko": """# t2k 설정. 기본값은 t2k/defaults.toml 에 있고, 같은 표 · 키를 여기에 쓰면 덮어쓴다.
 
 [general]
-# 사이트 화면 · 요약 · 주간 요약 · 디스코드 답장의 언어. "en" (English) 또는 "ko" (한국어)
-language = "en"
+# 사이트 화면 · 요약 · 주간 요약 · 디스코드 답장 · 명령줄의 언어. "en" (English) 또는 "ko" (한국어)
+# 사람을 추가하기 전에 정한다: 사람의 첫 카테고리와 관심사 파일이 이 언어로 만들어진다
+language = "{language}"
 
 [site]
-# Cloudflare 계정의 workers.dev 하위 도메인 (대시보드 → Workers & Pages → 오른쪽의 workers.dev 하위 도메인).
+# Cloudflare 계정의 workers.dev 하위 도메인 (대시보드 → Workers & Pages). 아래 따옴표 안에 쓴다.
 # 사이트 주소는 https://<id>-yt.<subdomain>.workers.dev 가 된다
 subdomain = ""
 
@@ -45,7 +57,29 @@ subdomain = ""
 # owners = ["456..."]          # 이 채널에서 지시를 받을 디스코드 사용자 ID
 # kv_namespace = "..."         # 사이트 조작 대기열 (user add 가 만든다)
 # ready = false                # Access 를 확인한 뒤 user ready 가 true 로 바꾼다
-"""
+""",
+    "en": """# t2k settings. Defaults live in t2k/defaults.toml; set the same table and key here to override them.
+
+[general]
+# Language of the sites, summaries, weekly reviews, Discord replies and command line: "en" (English) or "ko" (Korean).
+# Choose it before adding people: their first category and interests file are created in this language.
+language = "{language}"
+
+[site]
+# Your Cloudflare account's workers.dev subdomain (dashboard → Workers & Pages). Write it inside the quotes below.
+# Sites live at https://<id>-yt.<subdomain>.workers.dev
+subdomain = ""
+
+# Add people with `t2k user add`. Format:
+# [[user]]
+# id = "alice"                 # lowercase letters and digits; used for the folder and Worker name
+# name = "Alice"               # name shown on the site
+# channel_id = "123..."        # this person's Discord channel
+# owners = ["456..."]          # Discord user IDs allowed to make requests in this channel
+# kv_namespace = "..."         # site edit queue (created by user add)
+# ready = false                # set to true by t2k user ready once Access is confirmed
+""",
+}
 
 # 사람을 추가할 때 만드는 파일. [general] language 에 맞는 것을 쓴다
 CATEGORIES = {
@@ -104,7 +138,8 @@ def init(log=print) -> int:
     """데이터 폴더를 만든다. 이미 있는 파일은 바꾸지 않는다."""
     d = config.DATA
     d.mkdir(parents=True, exist_ok=True)
-    for name, text in (("config.toml", CONFIG), (".gitignore", GITIGNORE)):
+    code = i18n.lang()  # config.toml 이 아직 없으면 T2K_LANG, 그것도 없으면 영어
+    for name, text in (("config.toml", CONFIG[code].replace("{language}", code)), (".gitignore", GITIGNORE[code])):
         f = d / name
         if f.exists():
             log(t("setup.exists", path=f))
@@ -145,10 +180,13 @@ def user_block(u: dict) -> str:
 
 
 def add_user(user_id: str, name: str, channel_id: str, owners: list[str], log=print) -> int:
+    """사람을 추가한다. 도중에 실패하면 같은 명령을 다시 실행해 이어 간다:
+    config.toml 에 이미 있고 아직 열지 않은 사람(ready = false)이면 기록된 KV 를 그대로 쓰고 안내 페이지부터 다시 올린다."""
     if not config.USER_ID_RE.match(user_id):
         log(t("setup.bad_id"))
         return 2
-    if any(u.id == user_id for u in config.users()):
+    existing = next((u for u in config.users() if u.id == user_id), None)
+    if existing and existing.ready:
         log(t("setup.user_exists", id=user_id))
         return 2
     if not re.fullmatch(r"\d{15,21}", channel_id) or not all(re.fullmatch(r"\d{15,21}", o) for o in owners):
@@ -163,13 +201,27 @@ def add_user(user_id: str, name: str, channel_id: str, owners: list[str], log=pr
         if not (folder / fname).exists():
             (folder / fname).write_text(text)
     log(t("setup.folder", path=folder))
-    kv = create_kv(user_id)
+    if existing and existing.kv_namespace:
+        log(t("setup.resume", id=user_id))
+        if existing.channel_id != channel_id or list(existing.owners) != owners or existing.name != name:
+            log(t("setup.resume_keeps", path=config.config_file()))
+        kv = existing.kv_namespace
+    else:
+        try:
+            kv = create_kv(user_id)
+        except RuntimeError as e:
+            log(t("setup.kv_failed", error=e))
+            return 1
+        with config.config_file().open("a") as f:
+            f.write(user_block({"id": user_id, "name": name, "channel_id": channel_id, "owners": owners, "kv_namespace": kv}))
+        config.reload()
     log(t("setup.kv", id=kv))
-    with config.config_file().open("a") as f:
-        f.write(user_block({"id": user_id, "name": name, "channel_id": channel_id, "owners": owners, "kv_namespace": kv}))
-    config.reload()
     u = config.user(user_id)
-    deploy.placeholder(u)
+    try:
+        deploy.placeholder(u)
+    except RuntimeError as e:  # 설정에는 이미 기록했다. 같은 명령을 다시 실행하면 여기서부터 이어 간다
+        log(t("setup.placeholder_failed", error=e))
+        return 1
     _commit(t("setup.commit_add", name=name), "config.toml", f"users/{user_id}", log=log)
     log(t("setup.add_done", url=u.site_url, worker=u.worker, id=user_id))
     return 0
@@ -203,12 +255,28 @@ def set_ready(user_id: str, value: bool = True) -> None:
     config.reload()
 
 
+def clear_queue(u: config.User, log=print) -> None:
+    """사이트 조작 대기열(KV)을 비운다. Access 를 설정하기 전에는 누구나 사이트의 조작 API 에 요청을 넣을 수 있었으므로,
+    사이트를 열기 전에 쌓인 조작은 적용하지 않고 버린다."""
+    with config.as_user(u):
+        items = site_ops.pending()
+        for x in items:
+            site_ops.delete(x["key"])
+    if items:
+        log(t("setup.queue_cleared", n=len(items)))
+
+
 def ready(user_id: str, log=print) -> int:
     u = config.user(user_id)
     ok, why = access_protected(u.site_url)
     log(f"{u.site_url}: {why}")
     if not ok:
         log(t("setup.not_ready"))
+        return 1
+    try:
+        clear_queue(u, log=log)
+    except RuntimeError as e:
+        log(t("setup.queue_failed", error=e))
         return 1
     set_ready(user_id)
     _commit(t("setup.commit_ready", name=u.name), "config.toml", log=log)
@@ -217,7 +285,11 @@ def ready(user_id: str, log=print) -> int:
         common = config.path("state")
     with config.as_user(u):
         site.build(status_dir=common)
-    deploy.worker(u)
+    try:
+        deploy.worker(u)
+    except RuntimeError as e:  # ready 는 이미 기록했다. 다음 파이프라인 주기 또는 t2k redeploy 로 다시 올린다
+        log(t("setup.deploy_failed", error=e, id=user_id))
+        return 1
     log(t("setup.ready_done", url=u.site_url))
     return 0
 

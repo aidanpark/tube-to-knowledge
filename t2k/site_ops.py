@@ -14,6 +14,7 @@
 import json
 import re
 import subprocess
+import tempfile
 import time
 
 from . import config, recategorize, remove, site
@@ -32,7 +33,9 @@ def namespace_id() -> str:
 
 
 def _run(args: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(args, capture_output=True, text=True, timeout=180, cwd=config.DATA)
+    # 빈 임시 폴더에서 실행한다. wrangler 를 데이터 폴더(site/ 가 있는 곳)에서 실행하지 않는다
+    with tempfile.TemporaryDirectory() as d:
+        return subprocess.run(args, capture_output=True, text=True, timeout=180, cwd=d)
 
 
 def _error(p: subprocess.CompletedProcess) -> str:

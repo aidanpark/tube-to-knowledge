@@ -17,13 +17,13 @@ from functools import partial
 import discord
 
 from . import config, discord_inbox, service
-from .summarize import KST
+from .summarize import now as local_now
 
 log = partial(print, flush=True)
 
 
 def now_iso() -> str:
-    return datetime.now(KST).isoformat(timespec="seconds")
+    return local_now().isoformat(timespec="seconds")
 
 
 def as_record(m: discord.Message) -> dict:

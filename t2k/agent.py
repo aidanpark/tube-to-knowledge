@@ -29,8 +29,9 @@ from functools import partial
 from pathlib import Path
 
 from . import config, discord_inbox
+from .pipeline import git_push
 from .i18n import lang, t
-from .summarize import KST, _claude_bin
+from .summarize import now as local_now, _claude_bin
 
 WORK = Path.home() / ".local" / "share" / "t2k" / "agent"  # 지시마다의 worktree (데이터 저장소 밖)
 # 작업 공간. 홈 폴더 밖에 둔다: 홈 · 시스템 폴더는 아래 거부 규칙으로 막는다.
@@ -58,7 +59,7 @@ log = partial(print, flush=True)
 
 
 def now_iso() -> str:
-    return datetime.now(KST).isoformat(timespec="seconds")
+    return local_now().isoformat(timespec="seconds")
 
 
 class State:
@@ -294,7 +295,9 @@ def apply(task: dict, dc) -> None:
                 _git("merge", "--abort", check=False)
                 raise RuntimeError(t("discord.agent.merge_conflict", error=(p.stdout + p.stderr).strip()[-300:]))
             if _git("remote").strip():
-                _git("push", "-q")
+                p = git_push(config.DATA)
+                if p.returncode != 0:  # 합치기는 끝났다. 파이프라인의 다음 푸시가 이 커밋도 함께 올린다
+                    log(f"{now_iso()} 푸시 실패 (지시 {task['id']}): {p.stderr.strip()[-300:]}")
             task["status"] = "applied"
             ids = [user.id]  # 그 사람의 사이트만
             r = _t2k("redeploy", *ids, data=config.DATA)

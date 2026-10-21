@@ -3,11 +3,14 @@ import json
 from datetime import datetime
 
 import pytest
+from zoneinfo import ZoneInfo
 
 from t2k import config, pipeline, site, weekly
-from t2k.summarize import KST, SummaryError, validate as validate_summary
+from t2k.summarize import SummaryError, validate as validate_summary
 from tests.test_site import write
 from tests.test_summarize import FULL, SHORT, TR
+
+KST = ZoneInfo("Asia/Seoul")  # 시험의 고정 시각용. 프로그램은 이 맥의 현지 시간대를 쓴다
 
 ALICE = lambda: config.user("alice")
 
@@ -130,7 +133,7 @@ def test_pipeline_step_once_per_cycle_then_done(data, monkeypatch):
             add(src, vid)
             add(src, vid.replace("0000000", "1111111"), cat="0002_AI_뉴스")
     status = pipeline.Status(data / "state.json")
-    now = datetime(2026, 10, 19, 0, 1, tzinfo=KST).timestamp()
+    now = datetime(2026, 10, 19, 0, 1).astimezone().timestamp()  # 이 맥의 현지 시각 월요일 0시 1분
     users = config.users()
     made = [pipeline.weekly_step(status, users, now) for _ in range(3)]
     assert [m[1] for m in made[:2]] == ["주간 2026-W42 AI_개발도구", "주간 2026-W42 AI_뉴스"] and made[2] is None

@@ -30,7 +30,7 @@ ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 URL_RES = [
     re.compile(r"(?:v=|/shorts/|/embed/|/live/|youtu\.be/)([A-Za-z0-9_-]{11})"),
 ]
-NO_RETRY = {"no_transcript", "unavailable", "blocked"}
+NO_RETRY = {"no_transcript", "unavailable", "blocked", "tool"}  # tool: yt-dlp 를 실행하지 못함 (설치 문제)
 CHAPTER_SECONDS = 30
 BLOCKED_RE = re.compile(r"HTTP Error 429|Too Many Requests|Sign in to confirm|not a bot", re.I)
 UNAVAILABLE_RE = re.compile(r"Private video|Video unavailable|has been removed|account .* terminated|"
@@ -75,6 +75,8 @@ def _ytdlp(args: list[str], timeout: int) -> subprocess.CompletedProcess:
                            capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
         raise TranscriptError("transient", f"yt-dlp 시간 초과 ({timeout}초)") from e
+    except OSError as e:  # yt-dlp 가 없거나 실행할 수 없다. 동영상의 문제가 아니므로 시도 횟수에 넣지 않는다
+        raise TranscriptError("tool", f"yt-dlp 를 실행하지 못함: {e}") from e
     if p.returncode != 0:
         err = (p.stderr or "").strip()
         raise TranscriptError(classify(err), err.splitlines()[-1][:300] if err else "yt-dlp 실패")

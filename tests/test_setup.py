@@ -45,7 +45,12 @@ def test_add_user_appends_block_and_deploys_placeholder(data, monkeypatch):
     u = config.user("carol")
     assert u.kv_namespace == "f" * 32 and u.owners == ("223456789012345678",) and not u.ready
     assert deployed == ["carol-yt"] and (data / "users/carol/categories.toml").exists()
-    assert setup.add_user("carol", "캐럴", "123456789012345678", ["1" * 18], log=lambda m: None) == 2  # 중복
+    # 아직 열지 않은 사람은 같은 명령으로 이어 간다: 기록된 KV 를 쓰고 안내 페이지를 다시 올린다
+    monkeypatch.setattr(setup, "create_kv", lambda uid: pytest.fail("KV 를 다시 만들지 않는다"))
+    assert setup.add_user("carol", "캐럴", "123456789012345678", ["1" * 18], log=lambda m: None) == 0
+    assert deployed == ["carol-yt", "carol-yt"] and config.user("carol").owners == ("223456789012345678",)
+    assert (data / "config.toml").read_text().count('id = "carol"') == 1
+    assert setup.add_user("alice", "앨리스", "123456789012345678", ["1" * 18], log=lambda m: None) == 2  # 이미 열린 사람
     assert setup.add_user("dave", "데이브", "abc", ["1" * 18], log=lambda m: None) == 2  # 숫자 아님
 
 
@@ -56,6 +61,7 @@ def test_ready_requires_access(data, monkeypatch):
     monkeypatch.setattr(setup, "_commit", lambda *a, **k: None)
     deployed = []
     monkeypatch.setattr(setup.deploy, "worker", lambda u: deployed.append(u.id))
+    monkeypatch.setattr(setup.site_ops, "pending", lambda: [])
     monkeypatch.setattr(setup, "access_protected", lambda url: (False, "응답 200"))
     assert setup.ready("bob", log=lambda m: None) == 1
     assert not config.user("bob").ready and deployed == []

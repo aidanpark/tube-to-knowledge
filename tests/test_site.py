@@ -3,10 +3,13 @@ import json
 from datetime import datetime
 
 import pytest
+from zoneinfo import ZoneInfo
 
 from t2k import site
-from t2k.summarize import KST, render, validate
+from t2k.summarize import render, validate
 from tests.test_summarize import FULL, SHORT, TR
+
+KST = ZoneInfo("Asia/Seoul")  # 시험의 고정 시각용. 프로그램은 이 맥의 현지 시간대를 쓴다
 
 NOW = datetime(2026, 10, 21, 9, 0, tzinfo=KST)  # 수요일, 43주
 

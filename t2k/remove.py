@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import config
-from .summarize import KST, read_front_matter
+from .summarize import now as local_now, read_front_matter
 
 
 def remove(video_ids: list[str], summaries: Path | None = None, state: Path | None = None,
@@ -27,7 +27,7 @@ def remove(video_ids: list[str], summaries: Path | None = None, state: Path | No
             f.unlink()
         (transcripts / f"{vid}.json").unlink(missing_ok=True)
         rec = {"video_id": vid, "title": meta.get("title", ""), "category": meta.get("category", ""),
-               "lifespan": meta.get("lifespan", ""), "time": datetime.now(KST).isoformat(timespec="seconds")}
+               "lifespan": meta.get("lifespan", ""), "time": local_now().isoformat(timespec="seconds")}
         with (state / "removed.jsonl").open("a") as fp:
             fp.write(json.dumps(rec, ensure_ascii=False) + "\n")
         done.append(rec)

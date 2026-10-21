@@ -40,6 +40,11 @@ def _run(args: list[str], timeout: int = 120, **kw) -> subprocess.CompletedProce
         return None
 
 
+def launchd_env() -> dict[str, str]:
+    """자동 실행 작업이 받는 환경 변수 (service.plist 와 같다)."""
+    return dict(service.plist("pipeline")["EnvironmentVariables"])
+
+
 def check_tools(r: Report) -> None:
     r.section(t("doctor.sec_tools"))
     r(OK if sys.platform == "darwin" else WARN, t("doctor.os", platform=sys.platform),
@@ -50,15 +55,17 @@ def check_tools(r: Report) -> None:
                        ("npx", "brew install node")):
         found = shutil.which(tool)
         r(OK if found else FAIL, f"{tool}: {found or t('doctor.none')}", "" if found else hint)
-    # 자동 실행(launchd)과 같은 PATH 로 시험한다. 터미널 앱의 claude 래퍼는 그 앱 밖에서 실패한다
+    # 자동 실행(launchd)과 같은 환경으로 시험한다: PATH 와 몇 가지 변수만 넘긴다 (service.plist).
+    # 터미널 앱의 claude 래퍼나 셸의 ANTHROPIC_API_KEY 처럼 자동 실행에서는 보이지 않는 것에 기대어 통과하지 않게 한다
     claude = service.find("claude") or _claude_bin()
     p = _run([claude, "-p", "--model", "haiku", "--output-format", "json", "--no-session-persistence", "--tools", ""],
-             input=t("doctor.claude_prompt"), cwd=tempfile.gettempdir(), env={**os.environ, "PATH": service.search_path()})
+             input=t("doctor.claude_prompt"), cwd=tempfile.gettempdir(), env=launchd_env())
     try:
         ok = p is not None and p.returncode == 0 and not json.loads(p.stdout).get("is_error")
     except ValueError:
         ok = False
-    r(OK if ok else FAIL, t("doctor.claude", path=claude), "" if ok else t("doctor.claude_hint"))
+    hint = "" if ok else t("doctor.claude_env_hint") if os.environ.get("ANTHROPIC_API_KEY") else t("doctor.claude_hint")
+    r(OK if ok else FAIL, t("doctor.claude", path=claude), hint)
 
 
 def check_data(r: Report) -> list[config.User]:
@@ -74,6 +81,10 @@ def check_data(r: Report) -> list[config.User]:
     has_remote = bool(remote and remote.stdout.strip())
     r(OK if has_remote else WARN, t("doctor.remote") if has_remote else t("doctor.no_remote"),
       "" if has_remote else t("doctor.remote_hint"))
+    if has_remote:  # 추적 브랜치가 없으면 git push 가 실패한다. 처음 한 번 터미널에서 push -u 하면 자격 증명도 저장된다
+        up = _run(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd=config.DATA)
+        if not (up and up.returncode == 0):
+            r(WARN, t("doctor.no_upstream"), t("doctor.no_upstream_hint", path=config.DATA))
     sub = config.settings()["site"].get("subdomain")
     r(OK if sub else FAIL, t("doctor.subdomain", value=sub or t("doctor.none")), "" if sub else t("doctor.subdomain_hint"))
     users = list(config.users())
@@ -87,8 +98,15 @@ def check_data(r: Report) -> list[config.User]:
 
 def check_discord(r: Report, users: list[config.User]) -> None:
     r.section(t("doctor.sec_discord"))
+    try:  # 자동 실행 작업처럼 토큰 파일만 읽는다 (셸의 DISCORD_BOT_TOKEN 은 자동 실행에 보이지 않는다)
+        token = discord_inbox.load_token(use_env=False)
+    except discord_inbox.DiscordError as e:
+        r(FAIL, t("doctor.token", error=e), t("doctor.token_hint", path=discord_inbox.TOKEN_FILE))
+        if os.environ.get("DISCORD_BOT_TOKEN"):
+            r(FAIL, t("doctor.token_env_only"), t("doctor.token_hint", path=discord_inbox.TOKEN_FILE))
+        return
     try:
-        dc = discord_inbox.Discord(discord_inbox.load_token())
+        dc = discord_inbox.Discord(token)
         me = dc.me()
     except Exception as e:
         r(FAIL, t("doctor.token", error=e), t("doctor.token_hint", path=discord_inbox.TOKEN_FILE))
@@ -114,7 +132,7 @@ def check_cloudflare(r: Report, users: list[config.User]) -> None:
     with tempfile.TemporaryDirectory() as d:  # 빈 폴더에서 실행한다 (deploy.py)
         p = _run([*WRANGLER, "whoami"], timeout=180, cwd=d)
         logged = p is not None and p.returncode == 0 and "not authenticated" not in (p.stdout + p.stderr).lower()
-        r(OK if logged else FAIL, t("doctor.wrangler"), "" if logged else "npx wrangler login")
+        r(OK if logged else FAIL, t("doctor.wrangler"), "" if logged else t("doctor.wrangler_hint"))
         if not logged:
             return
         for u in users:

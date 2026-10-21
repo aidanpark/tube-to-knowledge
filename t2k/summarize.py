@@ -19,14 +19,19 @@ import tempfile
 from urllib.parse import urlsplit
 from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import requests
 
 from . import config, i18n
 from .i18n import t
 
-KST = ZoneInfo("Asia/Seoul")
+
+
+def now() -> datetime:
+    """이 맥의 현지 시각 (시간대 포함). 요약일 · 주의 경계 · 기록 시각은 모두 이 시각을 쓴다.
+    호출할 때마다 시스템 시간대를 읽으므로 일광 절약 시간이 바뀌어도 맞다 (상시 실행하는 봇에서도)."""
+    return datetime.now().astimezone()
+
 RECOMMENDATIONS = {"반복필수시청": 5, "필수시청": 4, "시간되면 시청": 3, "요약으로 충분": 2, "시청 불필요 삭제추천": 1}
 LIFESPANS = ("짧음", "중간", "긺")
 QUALITIES = ("high", "medium", "low")
@@ -271,6 +276,8 @@ def call_claude(prompt: str, model: str | None = None) -> str:
                 input=prompt, capture_output=True, text=True, cwd=d, timeout=s["timeout_seconds"])
         except subprocess.TimeoutExpired as e:
             raise SummaryError("transient", "claude -p 시간 초과") from e
+        except OSError as e:  # claude 가 없거나 실행할 수 없다: 주기 전체를 멈추지 않고 일시 오류로 다룬다
+            raise SummaryError("transient", f"claude 를 실행하지 못함: {e}") from e
     try:
         env = json.loads(p.stdout)
     except json.JSONDecodeError:
@@ -502,7 +509,7 @@ def summarize(tr: dict, attempts: int = 2) -> tuple[Path, dict]:
                 raise
     else:
         raise last
-    summarized = datetime.now(KST).strftime("%Y-%m-%d")
+    summarized = now().strftime("%Y-%m-%d")
     out = config.path("summaries") / s["category"] / f"{summarized}_{tr['video_id']}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     # 같은 동영상의 이전 요약이 있으면 교체한다

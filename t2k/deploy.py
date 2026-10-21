@@ -12,7 +12,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from . import config
+from . import config, i18n
+from .i18n import t
 from .site_ops import ANSI, WRANGLER
 
 COMPATIBILITY_DATE = "2026-10-01"
@@ -53,7 +54,7 @@ def placeholder(user: config.User) -> None:
     """요약이 없는 안내 페이지만 올린다. 새 Worker 를 만들고 Access 를 설정하기 전에 쓴다."""
     with tempfile.TemporaryDirectory() as d:
         (Path(d) / "index.html").write_text(
-            '<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex">'
-            '<title>준비 중</title><p>준비 중입니다.</p>')  # Access 전에 공개되므로 이름 등 아무 정보도 넣지 않는다
+            f'<!doctype html><html lang="{i18n.lang()}"><meta charset="utf-8"><meta name="robots" content="noindex">'
+            f'<title>{t("setup.placeholder_title")}</title><p>{t("setup.placeholder_body")}</p>')  # Access 전에 공개되므로 이름 등 아무 정보도 넣지 않는다
         (Path(d) / "robots.txt").write_text("User-agent: *\nDisallow: /\n")
         worker(user, Path(d))

@@ -96,7 +96,12 @@ def _load() -> dict:
     if not f.exists():
         from .i18n import t  # i18n 이 이 모듈을 가져오므로 여기서 가져온다
         raise SystemExit(t("config.no_config", path=f))
-    return tomllib.loads(f.read_text())
+    text = f.read_text()
+    try:
+        return tomllib.loads(text)
+    except tomllib.TOMLDecodeError as e:  # 손으로 고친 설정이 틀리면 traceback 대신 파일과 위치를 알린다
+        from .i18n import guess_lang, t
+        raise SystemExit(t("config.bad_toml", _lang=guess_lang(text), path=f, error=e))
 
 
 @lru_cache

@@ -82,7 +82,7 @@ def plist(job: str) -> dict:
             # claude -p 는 키체인에서 로그인 정보를 찾을 때 USER 가 필요하다 (없으면 Not logged in)
             "USER": user,
             "LOGNAME": user,
-            "LANG": os.environ.get("LANG") or "ko_KR.UTF-8",
+            "LANG": os.environ.get("LANG") or "en_US.UTF-8",  # 터미널의 LANG 을 따른다. 없으면 UTF-8 기본값
             "PYTHONUNBUFFERED": "1",
         },
         "StandardOutPath": log,

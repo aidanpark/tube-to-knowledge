@@ -30,7 +30,7 @@ The agent runs the steps in [AGENT_INSTALL.md](AGENT_INSTALL.md) and stops for t
 - **Change your site by asking.** Write "For cooking videos, list the ingredients" or "Make the text bigger" in Discord. Claude edits your settings and site, and applies the change after you approve it.
 - **Together, but separate.** Each family member has their own channel, interests, categories and site. One Mac handles everyone.
 - **On your own computer, private by default.** Summaries are generated on your Mac and recorded in your git repository. Each site opens only for the emails you allow with Cloudflare Access, and t2k publishes nothing until it has confirmed that lock.
-- **English or Korean.** The site, summaries, weekly reviews and Discord replies follow one setting (`[general] language`).
+- **English or Korean.** The site, summaries, weekly reviews, Discord replies and the command line follow one setting (`[general] language`).
 
 ![Three t2k site screens at full length: Home (this week, recent summaries, categories), a sourdough video summary (watch recommendation, how long it lasts, summary, key points, claims and evidence, personal insight, things to try, related links, timestamps), and Categories](docs/images/en/screens.png)
 
@@ -43,7 +43,7 @@ The agent runs the steps in [AGENT_INSTALL.md](AGENT_INSTALL.md) and stops for t
   <img alt="Five steps: share a link, get captions with yt-dlp, summarize and file using your interests, publish to your private site, reply in Discord with the link. Everything after the first step runs automatically every minute." src="docs/images/en/flow-light.png">
 </picture>
 
-Everything after you share the link is automatic. A background job on your Mac checks the Discord channels every minute and summarizes one video at a time, taking turns between people. Summaries and category changes are committed to your data repository, and only the sites that changed are redeployed. If YouTube temporarily blocks caption requests, t2k waits and retries, from 30 minutes up to 4 hours. After Sunday midnight, the same job writes last week's weekly review, one category at a time, for every category with at least two summaries that week; new videos always come first.
+Everything after you share the link is automatic. A background job on your Mac checks the Discord channels every minute and summarizes one video at a time, taking turns between people. Summaries and category changes are committed to your data repository, and only the sites that changed are redeployed. If YouTube temporarily blocks caption requests, t2k waits and retries, from 30 minutes up to 4 hours. After Sunday midnight, the same job writes last week's weekly review, one category at a time, for every category with at least two summaries that week; new videos always come first. Times follow this Mac's time zone: weekly reviews run after Sunday midnight local time.
 
 ## Change your site with one Discord message
 
@@ -79,7 +79,7 @@ Requests only ever touch that person's site. Claude runs in a sandbox that conta
 
 The first setup takes about an hour. Each step ends with a **Check**; move on when it passes. Run `t2k doctor` at any time to see what is missing.
 
-> **Note:** the site, summaries, weekly reviews, Discord replies and the command line (including `t2k doctor`) follow `[general] language`. Only the background job logs (`~/Library/Logs/t2k/`) are currently in Korean. Before `t2k init` creates `config.toml`, the command line uses English; set `T2K_LANG=ko` for Korean.
+> **Note:** the site, summaries, weekly reviews, Discord replies and the command line (including `t2k doctor`) follow `[general] language` in your data folder's `config.toml`. The background job logs (`~/Library/Logs/t2k/`) and the progress lines of `t2k sync-ops` and `t2k weekly` are currently in Korean. Before `t2k init` creates `config.toml`, the command line uses English, or Korean with `T2K_LANG=ko`; once `config.toml` exists, `T2K_LANG` is ignored.
 
 > **Terms of use:** t2k fetches YouTube captions with yt-dlp. This may conflict with YouTube's Terms of Service, so use it for personal purposes and at your own risk. Summaries contain other people's content, so keep every site private with Access (step 5). t2k publishes no summaries until Access is confirmed.
 
@@ -95,12 +95,12 @@ brew install uv yt-dlp deno node git
 
 | Tool | Used for |
 |---|---|
-| uv | Python environment and runs |
+| uv | Python 3.12 environment (uv installs it, pinned by `.python-version`) and runs |
 | yt-dlp | Captions and video information. If fetching keeps failing, t2k checks for a new release and runs `brew upgrade yt-dlp` |
 | deno | The JavaScript runtime yt-dlp uses for YouTube |
 | node (npx) | Runs wrangler, Cloudflare's deploy tool (`npx wrangler@4.147.0`, pinned) |
 
-Install **Claude Code** (https://claude.com/claude-code) and run `claude` once in a terminal to sign in.
+Install **Claude Code** (https://claude.com/claude-code) and run `claude` once in a terminal to sign in (`/login`). Sign in this way rather than with an API key in your shell: the background jobs do not see your shell's environment variables, so an exported `ANTHROPIC_API_KEY` works in the terminal but not for t2k. `t2k doctor` checks Claude with the same environment the background jobs get.
 
 ### 2. Get t2k and create your data folder
 
@@ -116,8 +116,8 @@ t2k init                          # creates ~/t2k-data
 ```
 
 - To keep your data elsewhere, add `export T2K_HOME=<folder>` to `~/.zshrc` before running `t2k init`.
-- The language is set in the data folder's `config.toml` (`[general] language = "en"`). Use `"ko"` for Korean.
-- To back up your data, connect a **private** remote repository (`git -C ~/t2k-data remote add origin …`). With a remote, t2k pushes after every change.
+- **Language:** `t2k init` writes `[general] language = "en"` into `config.toml`. For Korean, run `T2K_LANG=ko t2k init` instead (it writes `"ko"`), or change the line. Choose the language before adding people: each person's first category and interests file are created in it.
+- To back up your data, create a **private** remote repository, connect it with `git -C ~/t2k-data remote add origin <url>`, and push once from a terminal with `git -C ~/t2k-data push -u origin main` (this also stores your git credentials). After that, t2k pushes after every change.
 - If `t2k init` reports that it could not commit, set your git identity and run it again: `git config --global user.name "Name"`, `git config --global user.email "you@example.com"`.
 
 **Check:** in `t2k doctor`, the Tools and Data folder sections pass, except for the subdomain and people you have not added yet.
@@ -131,7 +131,7 @@ t2k init                          # creates ~/t2k-data
 3. Save the token to a file. The command below saves the token from your clipboard, so **type it in rather than pasting it** (copying the command would replace the token on your clipboard).
    ```sh
    mkdir -p ~/.config/t2k
-   umask 077; printf 'DISCORD_BOT_TOKEN=%s\n' "$(pbpaste)" > ~/.config/t2k/discord.env; pbcopy < /dev/null
+   (umask 077; printf 'DISCORD_BOT_TOKEN=%s\n' "$(pbpaste)" > ~/.config/t2k/discord.env); pbcopy < /dev/null
    ```
    Treat the token like a password. Never put it in a chat or a repository.
 4. Invite the bot to your server. If you do not have one, create it in the Discord app first (**+** on the left → Create My Own).
@@ -142,9 +142,9 @@ t2k init                          # creates ~/t2k-data
 ### 4. Discord channels and IDs
 
 1. In Discord, open Settings → Advanced and turn on **Developer Mode**. Right-clicking a channel or person now shows **Copy ID**.
-2. Create one **private channel** per person (for example, `archive-alice`): Create Channel → turn on Private Channel → add that person and the bot.
+2. Invite your family to the server: server name → Invite People. Check Discord's minimum age for your country.
+3. Create one **private channel** per person (for example, `archive-alice`): Create Channel → turn on Private Channel → add that person and the bot. Under the channel's permissions, allow the person **Read Message History · Embed Links · Add Reactions** (without them, they cannot see the bot's replies later).
    From the second channel on, right-click the first one and choose **Duplicate Channel** to keep the private setting and bot permissions.
-3. Invite your family: server name → Invite People. Add each person to their channel and, under the channel's permissions, allow **Read Message History · Attach Links · Add Reactions** (without them, they cannot see the bot's replies later). Check Discord's minimum age for your country.
 4. Copy each channel's **Channel ID**, and the **User ID** of everyone who may make requests in it (the person and the administrator).
 
 ### 5. Cloudflare and people
@@ -155,10 +155,9 @@ t2k init                          # creates ~/t2k-data
 npx --yes wrangler@4.147.0 login     # sign in to Cloudflare in the browser and allow access
 ```
 
-Open the Cloudflare dashboard → **Workers & Pages** to see your account's workers.dev subdomain (you will be asked to choose one the first time). Put it in your data folder's `config.toml`:
+Open the Cloudflare dashboard → **Workers & Pages** to see your account's workers.dev subdomain (you will be asked to choose one the first time). In your data folder's `config.toml`, `t2k init` already wrote a `[site]` table with an empty `subdomain = ""` line. Fill in that line; do not add a second `[site]` table:
 
 ```toml
-[site]
 subdomain = "myname"     # sites live at https://<id>-yt.myname.workers.dev
 ```
 
@@ -173,6 +172,7 @@ t2k user add --id alice --name Alice --channel <channel ID> --owner <Alice's use
 - `--id` uses lowercase letters and digits. It becomes the folder name and part of the site address.
 - `--owner` is someone who may make **requests** in this channel. Anyone in the channel can share links, but only owners can make requests.
 - This creates the person's folder (`users/alice/`: one category, "Other", and an interests file `profile.md`) and the site's edit queue (KV), and deploys **a site with a single "coming soon" line**. No summaries are published yet.
+- If it stops halfway (for example, wrangler is signed out or the placeholder deploy fails), fix the problem and run the same command again. It continues with what was already recorded.
 
 #### 5-3. Lock the site with Access
 
@@ -217,7 +217,7 @@ Use `t2k service status` to check them and `t2k service uninstall` to remove the
 - **Save a video:** send a YouTube link to your channel. If your channel does not appear in the share sheet, search for its name there.
 - **Make a request:** write a message without a link ([Change your site with one Discord message](#change-your-site-with-one-discord-message)).
 - **Edit on the site:** move or delete a summary at the bottom of its page, and add categories on the Categories page. Changes apply within a few minutes.
-- **Manual commands:** `t2k summarize <URL> --user alice` (summarize now), `t2k weekly 2026-W42` (write and publish that week's reviews; defaults to last week), `t2k redeploy` (republish sites), `t2k sync-ops` (apply site edits now), `t2k discord-check`.
+- **Manual commands:** `t2k summarize <URL> --user alice` (summarize now and publish to an open site), `t2k weekly 2026-W42` (write and publish that week's reviews; defaults to last week), `t2k redeploy` (republish sites), `t2k sync-ops` (apply site edits now), `t2k discord-check`.
 
 ### Per-person files (`<data folder>/users/<id>/`)
 
@@ -251,10 +251,13 @@ cd ~/tube-to-knowledge && git pull && uv sync && t2k service install && t2k doct
 | Site deploy fails | Look for the deploy failure in `pipeline.log`. t2k retries on the next run. Manually: `t2k redeploy <id>` |
 | A family member cannot see the bot's earlier replies | They lack Read Message History in their channel (step 4) |
 | A request gets no response | Check `agent.log`. If one of that person's requests is waiting for approval (⏳), the next one waits until they approve or cancel |
+| A wrong channel or owner ID | Edit that person's `[[user]]` entry (`channel_id`, `owners`) in `config.toml`, then run `t2k service install` so the always-on bot reloads it. `t2k doctor` shows whether each channel can be read |
+| Every command stops with "Cannot read …config.toml" | The file has a syntax error, often a second `[site]` table. Fix the line the message names |
+| `t2k user add` stopped halfway | Fix the problem in the message and run the same command again; it continues |
 
 ## Security
 
-- **Sites:** only the emails you allow in Cloudflare Access can open a site. A new site starts as an empty placeholder, and summaries are published only after t2k confirms the redirect to the Access sign-in (`t2k user ready`). The Worker's edit API (`/api/ops`) accepts only requests that passed Access. Search engines are kept out with robots.txt, `X-Robots-Tag` and a meta tag.
+- **Sites:** only the emails you allow in Cloudflare Access can open a site. A new site starts as an empty placeholder, and summaries are published only after t2k confirms the redirect to the Access sign-in (`t2k user ready`). The Worker's edit API (`/api/ops`) accepts only requests that passed Access, and `t2k user ready` discards any site edits queued before Access was confirmed. Search engines are kept out with robots.txt, `X-Robots-Tag` and a meta tag.
 - **Discord requests:** only messages from registered owners in their own channel count as requests. Claude runs in a temporary workspace (`/private/tmp/t2k-agent`) holding a copy of that person's files only, with shell and web tools and reads/writes to your home and system folders denied. Your global Claude Code settings and MCP servers are not loaded. Only that person's files are taken from the result, per-person templates render in a Jinja sandbox, and nothing is applied before approval.
 - **Summaries:** captions and video descriptions are treated as untrusted data (security rules in the prompt). Related links are limited to URLs that actually appear in the description.
 - **Secrets:** the Discord token lives in `~/.config/t2k/discord.env` (mode 600) and the Cloudflare sign-in is kept by wrangler. Neither the data folder nor this repository holds secrets. Raw captions (`transcripts/`) are never committed.

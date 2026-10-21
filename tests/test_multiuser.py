@@ -2,9 +2,12 @@
 import json
 
 import pytest
+from zoneinfo import ZoneInfo
 
 from t2k import config, pipeline, summarize
 from tests.test_summarize import TR
+
+KST = ZoneInfo("Asia/Seoul")  # 시험의 고정 시각용. 프로그램은 이 맥의 현지 시간대를 쓴다
 
 
 @pytest.fixture
@@ -151,7 +154,6 @@ def test_worker_config(root):
 def test_custom_layer_templates_css_rules(root):
     from datetime import datetime
     from t2k import site
-    from t2k.summarize import KST
     alice, sk = config.users()
     c = root / "users" / "bob"
     (c / "templates").mkdir(parents=True)
@@ -176,7 +178,6 @@ def test_user_templates_are_sandboxed(root):
     from datetime import datetime
     from jinja2.exceptions import SecurityError
     from t2k import site
-    from t2k.summarize import KST
     sk = config.users()[1]
     t = root / "users" / "bob" / "templates"
     t.mkdir(parents=True)

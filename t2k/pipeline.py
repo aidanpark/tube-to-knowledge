@@ -28,7 +28,7 @@ from functools import partial
 from pathlib import Path
 
 from . import backlog, config, deploy, discord_inbox, site, site_ops, weekly
-from .summarize import KST, SummaryError, read_front_matter
+from .summarize import SummaryError, now as local_now, read_front_matter
 
 TIME_BUDGET = 240           # 한 주기에서 요약에 쓰는 최대 시간(초). 다음 주기는 잠금으로 기다린다
 POLL_EVERY = 60             # 디스코드 채널 조회 간격(초)
@@ -40,7 +40,7 @@ log = partial(print, flush=True)
 
 
 def now_iso() -> str:
-    return datetime.now(KST).isoformat(timespec="seconds")
+    return local_now().isoformat(timespec="seconds")
 
 
 class Status:
@@ -96,12 +96,23 @@ def git_publish(message: str) -> bool:
         return False
     if not run(["git", "remote"]).stdout.strip():
         return True
-    p = run(["git", "push", "-q"])
+    p = git_push(config.DATA)
     if p.returncode != 0:
         log(f"{now_iso()} 푸시 실패: {p.stderr.strip()[-300:]}")
         return False
     log(f"{now_iso()} 배포: {message.splitlines()[0]}")
     return True
+
+
+def git_push(cwd: Path) -> subprocess.CompletedProcess:
+    """현재 브랜치를 원격에 푸시한다. 추적 브랜치가 없으면(원격 저장소를 새로 연결한 직후) 설정하면서 푸시한다.
+    추적 브랜치 없이 git push 만 하면 「has no upstream branch」로 실패하고, 이후의 배포가 모두 멈춘다."""
+    run = partial(subprocess.run, capture_output=True, text=True, cwd=cwd, timeout=120)
+    if run(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"]).returncode == 0:
+        return run(["git", "push", "-q"])
+    remotes = run(["git", "remote"]).stdout.split()
+    remote = "origin" if "origin" in remotes else remotes[0]
+    return run(["git", "push", "-q", "-u", remote, "HEAD"])
 
 
 def interleave(queues: list[list]) -> list:
@@ -112,7 +123,7 @@ def interleave(queues: list[list]) -> list:
 def weekly_step(status: Status, users, now: float) -> tuple[config.User, str] | None:
     """지난주의 주간 요약을 한 건 만든다. 만들었으면 (사람, 변경 내용), 없으면 None.
     지난주 것을 모두 만들면 status 에 기록해 다음 주까지 확인하지 않는다 (요약일이 지난주인 요약은 더 생기지 않는다)."""
-    key = weekly.last_week(datetime.fromtimestamp(now, KST))
+    key = weekly.last_week(datetime.fromtimestamp(now).astimezone())
     if status.d.get("weekly_done") == key:
         return None
     for u in users:
@@ -176,7 +187,7 @@ def cycle(now: float | None = None) -> None:
 
     # 4 요약
     if todo and status.paused(now):
-        log(f"{now_iso()} 차단으로 쉬는 중 (대기 {len(todo)}개, {datetime.fromtimestamp(status.d['pause_until'], KST):%H:%M} 까지)")
+        log(f"{now_iso()} 차단으로 쉬는 중 (대기 {len(todo)}개, {datetime.fromtimestamp(status.d['pause_until']).astimezone():%H:%M} 까지)")
     elif todo:
         start, last = time.monotonic(), None
         for u, it in todo:
@@ -195,7 +206,7 @@ def cycle(now: float | None = None) -> None:
             if kind == "blocked":
                 status.blocked(time.time())
                 break
-            if kind == "claude":
+            if kind in ("claude", "tool"):  # claude -p 오류 · 프로그램 없음: 다음 주기에 다시 시도한다
                 break
             status.unblocked()
             if kind in ("done", "failed"):
@@ -228,7 +239,8 @@ def cycle(now: float | None = None) -> None:
     banner_changed = status.d.get("_banner") != _banner_key(status, now)
     retry = set(status.d.get("deploy_pending", []))
     changed = [u for u in users if banner_changed or changes[u.id] or u.id in kv_items or u.id in retry]
-    published = {u.id: True for u in users}
+    # 사이트를 열지 않은 사람(ready = false)은 게시되지 않으므로 ✅ 와 요약 주소를 보내지 않는다
+    published = {u.id: u.ready for u in users}
     if changed:
         status.d["_banner"] = _banner_key(status, now)
         status.save()  # 사이트가 최신 상태를 읽도록 먼저 저장한다
@@ -278,7 +290,7 @@ def _banner_key(status: Status, now: float) -> str:
 
 def run_weekly(key: str | None, user_ids: list[str]) -> int:
     """`t2k weekly`: 한 주의 주간 요약을 모두 만들고 커밋 · 배포한다. 파이프라인과 같은 잠금을 기다린다."""
-    key = key or weekly.last_week(datetime.now(KST))
+    key = key or weekly.last_week(local_now())
     users = [u for u in config.users() if not user_ids or u.id in user_ids]
     common = config.path("state")
     common.mkdir(parents=True, exist_ok=True)

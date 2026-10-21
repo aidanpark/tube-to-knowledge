@@ -45,6 +45,31 @@ def cmd_summarize(target: str, transcript_file: str | None) -> int:
         print(f"{path}\n" + t("cli.summary_line", category=s["category"], rating=s["rating"],
                                 recommendation=t(f"md.recommendation.{s['recommendation']}"),
                                 lifespan=t(f"md.lifespan.{s['lifespan']}")))
+    return publish(config.current_user() or config.default_user(), f"t2k summarize: {tr['video_id']} {tr.get('title', '')}")
+
+
+def publish(u: config.User, message: str) -> int:
+    """수동으로 만든 요약을 바로 게시한다: 그 사람의 사이트 생성 → 데이터 폴더 커밋 · 푸시 → 배포.
+    자동 실행의 파이프라인과 같은 잠금을 기다려, 두 작업이 같은 저장소를 동시에 커밋하지 않게 한다.
+    아직 열지 않은 사람(ready = false)은 저장만 한다 (Access 확인 전에는 게시하지 않는다)."""
+    import fcntl
+
+    from . import deploy, pipeline, site
+    if not u.ready:
+        print(t("cli.not_open_yet", id=u.id))
+        return 0
+    with config.as_user(None):
+        common = config.path("state")
+    common.mkdir(parents=True, exist_ok=True)
+    with open(common / "pipeline.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        with config.as_user(u):
+            site.build(status_dir=common)
+        if not pipeline.git_publish(message):
+            print(t("cli.publish_failed", id=u.id), file=sys.stderr)
+            return 1
+        deploy.worker(u)
+    print(t("cli.published", url=u.site_url))
     return 0
 
 

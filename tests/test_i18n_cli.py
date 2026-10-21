@@ -31,7 +31,7 @@ def no_config(tmp_path, monkeypatch):
 def test_lang_fallback_and_env(data, tmp_path, monkeypatch):
     assert i18n.lang() == "ko"  # 시험 데이터 폴더의 설정
     monkeypatch.setenv("T2K_LANG", "en")
-    assert i18n.lang() == "en"  # 환경 변수가 설정보다 먼저다
+    assert i18n.lang() == "ko"  # config.toml 이 있으면 T2K_LANG 을 보지 않는다 (수동 명령과 자동 실행의 언어가 같다)
     monkeypatch.delenv("T2K_LANG")
     no_config(tmp_path, monkeypatch)
     assert i18n.lang() == "en"  # config.toml 이 없으면 영어 (끝내지 않는다)
@@ -86,7 +86,7 @@ def run_doctor(monkeypatch) -> list[str]:
     monkeypatch.setattr(doctor, "_run", fake_run)
     monkeypatch.setattr(doctor.shutil, "which", lambda tool, path=None: f"/usr/bin/{tool}")
     monkeypatch.setattr(doctor.sys, "platform", "darwin")
-    monkeypatch.setattr(doctor.discord_inbox, "load_token", lambda: "token")
+    monkeypatch.setattr(doctor.discord_inbox, "load_token", lambda **kw: "token")
     monkeypatch.setattr(doctor.discord_inbox, "Discord", FakeDiscord)
     monkeypatch.setattr(setup.requests, "get", lambda *a, **k: Resp())
     monkeypatch.setattr(service, "loaded", lambda job: True)
@@ -119,7 +119,7 @@ def test_doctor_failures_english(data, monkeypatch):
     monkeypatch.setattr(doctor.sys, "platform", "darwin")
     monkeypatch.delenv("DISCORD_BOT_TOKEN", raising=False)
     real = doctor.discord_inbox.load_token
-    monkeypatch.setattr(doctor.discord_inbox, "load_token", lambda: real(data / "missing.env"))
+    monkeypatch.setattr(doctor.discord_inbox, "load_token", lambda **kw: real(data / "missing.env", **kw))
     monkeypatch.setattr(setup.requests, "get", lambda *a, **k: type("R", (), {"status_code": 200, "headers": {}})())
     monkeypatch.setattr(service, "loaded", lambda job: False)
     lines = []
@@ -150,7 +150,7 @@ def test_cli_usage_and_help(tmp_path, monkeypatch, capsys):
     assert "--name 이름 --channel 채널ID" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("code,created,nxt", [("en", "Created: ", "Next: set [site] subdomain"), ("ko", "만듦: ", "다음: config.toml 의")])
+@pytest.mark.parametrize("code,created,nxt", [("en", "Created: ", "Next: in config.toml, write your workers.dev subdomain"), ("ko", "만듦: ", "다음: config.toml 의")])
 def test_init_messages(tmp_path, monkeypatch, code, created, nxt):
     no_config(tmp_path, monkeypatch)
     if code == "ko":
