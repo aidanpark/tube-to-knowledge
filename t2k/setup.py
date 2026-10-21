@@ -15,6 +15,7 @@ from pathlib import Path
 import requests
 
 from . import config, deploy, i18n, site
+from .i18n import t
 from .site_ops import ANSI, WRANGLER
 
 GITIGNORE = """# 생성물 · 처리 상태 · 자막은 커밋하지 않는다
@@ -96,7 +97,7 @@ def _commit(message: str, *paths: str, log=print) -> None:
         return
     c = _git("commit", "-q", "-m", message, "--", *paths)
     if c.returncode != 0:
-        log(f"커밋하지 못함 (git 사용자 이름 · 이메일을 설정한다: git config --global user.name ...): {c.stderr.strip()}")
+        log(t("setup.commit_failed", error=c.stderr.strip()))
 
 
 def init(log=print) -> int:
@@ -106,17 +107,17 @@ def init(log=print) -> int:
     for name, text in (("config.toml", CONFIG), (".gitignore", GITIGNORE)):
         f = d / name
         if f.exists():
-            log(f"있음: {f}")
+            log(t("setup.exists", path=f))
         else:
             f.write_text(text)
-            log(f"만듦: {f}")
+            log(t("setup.created", path=f))
     for sub in ("users", "state"):
         (d / sub).mkdir(exist_ok=True)
     if _git("rev-parse", "--git-dir").returncode != 0:
         _git("init", "-q", "-b", "main")
-        log(f"git 저장소를 만듦: {d}")
-    _commit("t2k 데이터 폴더", "config.toml", ".gitignore", log=log)
-    log(f"\n데이터 폴더: {d}\n다음: config.toml 의 [site] subdomain 을 쓰고, t2k user add 로 사람을 추가한다.")
+        log(t("setup.git_init", path=d))
+    _commit(t("setup.commit_init"), "config.toml", ".gitignore", log=log)
+    log(t("setup.init_done", path=d))
     return 0
 
 
@@ -125,7 +126,7 @@ def _wrangler(*args: str) -> str:
     with tempfile.TemporaryDirectory() as d:
         p = subprocess.run([*WRANGLER, *args], capture_output=True, text=True, timeout=300, cwd=d)
     if p.returncode != 0:
-        raise RuntimeError(f"wrangler {' '.join(args[:3])} 실패: {ANSI.sub('', p.stderr or p.stdout).strip()[-800:]}")
+        raise RuntimeError(t("setup.wrangler_failed", cmd=" ".join(args[:3]), error=ANSI.sub("", p.stderr or p.stdout).strip()[-800:]))
     return ANSI.sub("", p.stdout)
 
 
@@ -133,7 +134,7 @@ def create_kv(user_id: str) -> str:
     out = _wrangler("kv", "namespace", "create", f"t2k-{user_id}-ops")
     m = re.search(r"\b([0-9a-f]{32})\b", out)
     if not m:
-        raise RuntimeError(f"KV ID 를 찾지 못함: {out[-400:]}")
+        raise RuntimeError(t("setup.kv_not_found", out=out[-400:]))
     return m.group(1)
 
 
@@ -145,34 +146,32 @@ def user_block(u: dict) -> str:
 
 def add_user(user_id: str, name: str, channel_id: str, owners: list[str], log=print) -> int:
     if not config.USER_ID_RE.match(user_id):
-        log("id 는 영문 소문자로 시작하는 소문자 · 숫자 20자 이내다 (예: alice)")
+        log(t("setup.bad_id"))
         return 2
     if any(u.id == user_id for u in config.users()):
-        log(f"이미 있음: {user_id}")
+        log(t("setup.user_exists", id=user_id))
         return 2
     if not re.fullmatch(r"\d{15,21}", channel_id) or not all(re.fullmatch(r"\d{15,21}", o) for o in owners):
-        log("채널 · 사용자 ID 는 숫자다 (디스코드 개발자 모드 → 우클릭 → ID 복사)")
+        log(t("setup.bad_ids"))
         return 2
     if not config.settings()["site"].get("subdomain"):
-        log(f"config.toml 의 [site] subdomain 을 먼저 쓴다: {config.config_file()}")
+        log(t("setup.no_subdomain", path=config.config_file()))
         return 2
     folder = config.DATA / "users" / user_id
     folder.mkdir(parents=True, exist_ok=True)
     for fname, text in (("categories.toml", CATEGORIES[i18n.lang()]), ("profile.md", PROFILE[i18n.lang()])):
         if not (folder / fname).exists():
             (folder / fname).write_text(text)
-    log(f"사람 폴더: {folder}")
+    log(t("setup.folder", path=folder))
     kv = create_kv(user_id)
-    log(f"조작 대기열 KV: {kv}")
+    log(t("setup.kv", id=kv))
     with config.config_file().open("a") as f:
         f.write(user_block({"id": user_id, "name": name, "channel_id": channel_id, "owners": owners, "kv_namespace": kv}))
     config.reload()
     u = config.user(user_id)
     deploy.placeholder(u)
-    _commit(f"사람 추가: {name}", "config.toml", f"users/{user_id}", log=log)
-    log(f"\n안내 페이지를 올렸다: {u.site_url}\n"
-        f"다음: Cloudflare 대시보드에서 Worker 「{u.worker}」 에 Access 를 설정하고 (README 4단계),\n"
-        f"      t2k user ready {user_id} 로 확인한다. 확인 전에는 요약을 올리지 않는다.")
+    _commit(t("setup.commit_add", name=name), "config.toml", f"users/{user_id}", log=log)
+    log(t("setup.add_done", url=u.site_url, worker=u.worker, id=user_id))
     return 0
 
 
@@ -181,11 +180,11 @@ def access_protected(url: str) -> tuple[bool, str]:
     try:
         r = requests.get(url, allow_redirects=False, timeout=20)
     except requests.RequestException as e:
-        return False, f"접속 실패: {e}"
+        return False, t("setup.connect_failed", error=e)
     loc = r.headers.get("location", "")
     if r.status_code in (302, 303) and "cloudflareaccess.com" in loc:
-        return True, f"{r.status_code} → Access 로그인"
-    return False, f"응답 {r.status_code}{' → ' + loc if loc else ''} (Access 로그인 화면으로 보내지 않음)"
+        return True, t("setup.protected", status=r.status_code)
+    return False, t("setup.not_protected", status=r.status_code, loc=" → " + loc if loc else "")
 
 
 def set_ready(user_id: str, value: bool = True) -> None:
@@ -199,7 +198,7 @@ def set_ready(user_id: str, value: bool = True) -> None:
                 else b.rstrip("\n") + f"\n{new}\n\n"
             break
     else:
-        raise SystemExit(f"없는 사람: {user_id}")
+        raise SystemExit(t("setup.unknown_user", id=user_id))
     f.write_text("[[user]]".join([head, *blocks]))
     config.reload()
 
@@ -209,17 +208,17 @@ def ready(user_id: str, log=print) -> int:
     ok, why = access_protected(u.site_url)
     log(f"{u.site_url}: {why}")
     if not ok:
-        log("Access 가 확인되지 않아 요약을 올리지 않는다. README 4단계의 Access 설정을 확인한다.")
+        log(t("setup.not_ready"))
         return 1
     set_ready(user_id)
-    _commit(f"사이트 열기: {u.name}", "config.toml", log=log)
+    _commit(t("setup.commit_ready", name=u.name), "config.toml", log=log)
     u = config.user(user_id)
     with config.as_user(None):
         common = config.path("state")
     with config.as_user(u):
         site.build(status_dir=common)
     deploy.worker(u)
-    log(f"요약 사이트를 올렸다: {u.site_url}")
+    log(t("setup.ready_done", url=u.site_url))
     return 0
 
 

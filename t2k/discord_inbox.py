@@ -38,12 +38,12 @@ def load_token(path: Path = TOKEN_FILE) -> str:
     if os.environ.get("DISCORD_BOT_TOKEN"):
         return os.environ["DISCORD_BOT_TOKEN"].strip()
     if not path.exists():
-        raise DiscordError(0, f"토큰 파일 없음: {path}")
+        raise DiscordError(0, t("token.no_file", path=path))
     for line in path.read_text().splitlines():
         key, _, value = line.partition("=")
         if key.strip() == "DISCORD_BOT_TOKEN" and value.strip():
             return value.strip().strip("'\"")
-    raise DiscordError(0, f"DISCORD_BOT_TOKEN 이 없음: {path}")
+    raise DiscordError(0, t("token.no_token", path=path))
 
 
 class Discord:

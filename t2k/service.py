@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 from . import config
+from .i18n import t
 
 JOBS = {
     "pipeline": {"StartInterval": 60, "RunAtLoad": True},
@@ -104,7 +105,7 @@ def loaded(job: str) -> bool:
 
 def install(jobs: list[str] | None = None, log=print) -> int:
     if sys.platform != "darwin":
-        log("자동 실행 등록은 macOS(launchd)만 지원한다")
+        log(t("service.macos_only"))
         return 1
     AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -116,10 +117,10 @@ def install(jobs: list[str] | None = None, log=print) -> int:
             plistlib.dump(plist(job), f)
         r = _launchctl("bootstrap", _domain(), str(p))
         if r.returncode != 0:
-            log(f"등록 실패 {label(job)}: {(r.stderr or r.stdout).strip()}")
+            log(t("service.install_failed", label=label(job), error=(r.stderr or r.stdout).strip()))
             return 1
-        log(f"등록 {label(job)} → {p}")
-    log(f"기록: {LOG_DIR}/<작업>.log")
+        log(t("service.installed", label=label(job), path=p))
+    log(t("service.logs", dir=LOG_DIR))
     return 0
 
 
@@ -130,7 +131,7 @@ def uninstall(jobs: list[str] | None = None, log=print) -> int:
         p = plist_path(job)
         if p.exists():
             p.unlink()
-        log(f"해제 {label(job)}")
+        log(t("service.removed", label=label(job)))
     return 0
 
 
@@ -138,9 +139,9 @@ def status(log=print) -> int:
     for job in JOBS:
         r = _launchctl("print", f"{_domain()}/{label(job)}")
         if r.returncode != 0:
-            log(f"{label(job)}: 등록되지 않음")
+            log(t("service.not_loaded", label=label(job)))
             continue
         state = re.search(r"^\s*state = (.+)$", r.stdout, re.M)
         code = re.search(r"^\s*last exit code = (.+)$", r.stdout, re.M)
-        log(f"{label(job)}: {state.group(1) if state else '?'} · 마지막 종료 코드 {code.group(1) if code else '-'}")
+        log(t("service.status", label=label(job), state=state.group(1) if state else "?", code=code.group(1) if code else "-"))
     return 0

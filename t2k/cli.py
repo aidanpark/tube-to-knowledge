@@ -3,6 +3,8 @@
 설치: init · user add · user ready · service install · doctor
 운영(자동 실행이 호출한다): pipeline · agent · bot
 수동: summarize · weekly · transcript · site · redeploy · sync-ops · remove · move · discord-check
+
+화면에 보이는 도움말 · 안내는 [general] language 를 따른다 (locales/<언어>/cli.toml 의 [cli]).
 """
 import argparse
 import json
@@ -11,6 +13,7 @@ import sys
 from pathlib import Path
 
 from . import config
+from .i18n import t
 
 
 def cmd_summarize(target: str, transcript_file: str | None) -> int:
@@ -20,7 +23,7 @@ def cmd_summarize(target: str, transcript_file: str | None) -> int:
         # 수동 처리: 직접 확보한 자막 텍스트로 요약한다 (자막 없는 동영상 등)
         vid = transcript.video_id_of(target)
         if not vid:
-            print(f"YouTube 동영상이 아님: {target}", file=sys.stderr)
+            print(t("cli.not_video", target=target), file=sys.stderr)
             return 2
         meta = transcript.metadata(vid)
         text = Path(transcript_file).read_text()
@@ -36,9 +39,12 @@ def cmd_summarize(target: str, transcript_file: str | None) -> int:
             return 2 if tr.get("reason") == "invalid" else 1
     path, s = summarize.summarize(tr)
     if s.get("kind") == "music":
-        print(f"{path}\n{s['category']} · ♪ {s['format']} {s['shortSummary']}")
+        fmt = t("md.format." + s["format"])
+        print(f"{path}\n{s['category']} · ♪ {fmt} {s['shortSummary']}")
     else:
-        print(f"{path}\n{s['category']} · {s['rating']}/5 {s['recommendation']} · 수명 {s['lifespan']}")
+        print(f"{path}\n" + t("cli.summary_line", category=s["category"], rating=s["rating"],
+                                recommendation=t(f"md.recommendation.{s['recommendation']}"),
+                                lifespan=t(f"md.lifespan.{s['lifespan']}")))
     return 0
 
 
@@ -51,7 +57,7 @@ def redeploy(ids: list[str]) -> int:
         with config.as_user(u):
             site.build(status_dir=common)
         deploy.worker(u)
-        print(f"배포 {u.worker}")
+        print(t("cli.deployed", worker=u.worker))
     return 0
 
 
@@ -60,16 +66,16 @@ COMMANDS = ["init", "user", "service", "doctor", "pipeline", "agent", "bot", "su
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(prog="t2k", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(prog="t2k", description=t("cli.description"), formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=COMMANDS)
-    ap.add_argument("target", nargs="*", help="명령의 대상 (user add · user ready · service install · 동영상 URL · ID · weekly 의 주 YYYY-Www)")
-    ap.add_argument("--user", help="summarize · site · remove · move: 대상 사람 id (기본값: 첫 번째 사람)")
-    ap.add_argument("--transcript", help="summarize: 직접 확보한 자막 텍스트 파일")
-    ap.add_argument("--id", help="user add: 사람 id (영문 소문자 · 숫자)")
-    ap.add_argument("--name", help="user add: 화면에 쓰는 이름")
-    ap.add_argument("--channel", help="user add: 디스코드 채널 ID")
-    ap.add_argument("--owner", action="append", default=[], help="user add: 지시를 받을 디스코드 사용자 ID (여러 번 쓸 수 있다)")
-    ap.add_argument("--react", action="store_true", help="discord-check: 링크가 있는 최근 메시지에 👀 반응을 단다")
+    ap.add_argument("target", nargs="*", help=t("cli.help_target"))
+    ap.add_argument("--user", help=t("cli.help_user"))
+    ap.add_argument("--transcript", help=t("cli.help_transcript"))
+    ap.add_argument("--id", help=t("cli.help_id"))
+    ap.add_argument("--name", help=t("cli.help_name"))
+    ap.add_argument("--channel", help=t("cli.help_channel"))
+    ap.add_argument("--owner", action="append", default=[], help=t("cli.help_owner"))
+    ap.add_argument("--react", action="store_true", help=t("cli.help_react"))
     a = ap.parse_args()
     sub = a.target[0] if a.target else ""
 
@@ -83,21 +89,21 @@ def main() -> None:
         from . import service
         fn = {"install": service.install, "uninstall": service.uninstall, "status": service.status}.get(sub)
         if not fn:
-            ap.error("t2k service install | uninstall | status")
+            ap.error(t("cli.usage_service"))
         sys.exit(fn())
     if a.cmd == "user":
         from . import setup
         if sub == "add":
             if not (a.id and a.name and a.channel and a.owner):
-                ap.error("t2k user add --id ID --name 이름 --channel 채널ID --owner 사용자ID [--owner ...]")
+                ap.error(t("cli.usage_user_add"))
             sys.exit(setup.add_user(a.id, a.name, a.channel, a.owner))
         if sub == "ready" and len(a.target) == 2:
             sys.exit(setup.ready(a.target[1]))
         if sub == "list":
             for u in config.users():
-                print(f"{u.id}\t{u.name}\t{'열림' if u.ready else '준비 중'}\t{u.site_url}")
+                print(f"{u.id}\t{u.name}\t{t('cli.user_open') if u.ready else t('cli.user_pending')}\t{u.site_url}")
             return
-        ap.error("t2k user add ... | user ready ID | user list")
+        ap.error(t("cli.usage_user"))
     if a.cmd == "check-site":
         from . import setup
         sys.exit(setup.check_site(sub))
@@ -113,7 +119,7 @@ def main() -> None:
     if a.cmd == "weekly":
         from . import pipeline
         if sub and not re.fullmatch(r"\d{4}-W\d{2}", sub):
-            ap.error("t2k weekly [YYYY-Www] [--user ID]  (예: 2026-W42, 비우면 지난주)")
+            ap.error(t("cli.usage_weekly"))
         sys.exit(pipeline.run_weekly(sub or None, [a.user] if a.user else []))
     if a.cmd == "redeploy":
         sys.exit(redeploy(a.target))
@@ -127,7 +133,7 @@ def main() -> None:
                 print(f"== {u.name} ({u.channel_id})")
                 discord_inbox.check(u.channel_id, a.react)
         except discord_inbox.DiscordError as e:
-            print(f"디스코드 확인 실패: {e}", file=sys.stderr)
+            print(t("cli.discord_check_failed", error=e), file=sys.stderr)
             sys.exit(1)
         return
     if a.cmd == "sync-ops":
@@ -150,11 +156,11 @@ def main() -> None:
         elif a.cmd == "move":
             from . import recategorize
             for line in recategorize.move(a.target[1:], sub):
-                print(f"이동: {line} → {sub}")
+                print(t("cli.moved", line=line, to=sub))
         elif a.cmd == "remove":
             from . import remove
             for r in remove.remove(a.target):
-                print(f"삭제: {r['video_id']} {r['title']}")
+                print(t("cli.removed", id=r["video_id"], title=r["title"]))
 
 
 if __name__ == "__main__":

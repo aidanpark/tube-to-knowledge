@@ -53,7 +53,7 @@ weekly_note = "주간 요약은 매주 일요일 자정에 카테고리별로 �
 view_categories = "카테고리 보기"
 recent = "최근 요약"
 see_all = "모두 보기"
-empty_body = "디스코드 채널에 YouTube 링크를 보내면 첫 요약이 작성됩니다."
+empty_body = "디스코드 채널에 YouTube 링크를 공유하면 첫 요약이 작성됩니다."
 categories = "카테고리"
 all = "전체"
 

@@ -4,7 +4,7 @@ English | [한국어](README.ko.md)
 
 **Turn the knowledge flowing through YouTube into an archive that lasts.**
 
-A growing share of what we learn now comes from YouTube. But knowledge picked up from a video fades once the video ends, and it is hard to find again. tube-to-knowledge (`t2k`) keeps the videos worth keeping: share a link to Discord, and it summarizes the video from its captions with Claude, files it into your categories, and adds it to a private, searchable archive site. Every week it distills what you collected, and each family member gets an archive of their own.
+A growing share of what we learn now comes from YouTube. But knowledge picked up from a video fades once the video ends, and it is hard to find again. tube-to-knowledge (`t2k`) keeps the videos worth keeping: share a link to Discord, and AI summarizes the video from its captions, files it into your categories, and adds it to a private, searchable archive site. Every week it distills what you collected, and each family member gets an archive of their own.
 
 ## Features
 
@@ -65,9 +65,17 @@ Requests only ever touch that person's site. Claude runs in a sandbox that conta
 
 The first setup takes about an hour. Each step ends with a **Check**; move on when it passes. Run `t2k doctor` at any time to see what is missing.
 
-> **Note:** command-line and log messages (`t2k doctor`, `t2k user add`, the files in `~/Library/Logs/t2k/`) are currently in Korean. The site, summaries, weekly reviews and Discord replies follow `[general] language`.
+> **Note:** the site, summaries, weekly reviews, Discord replies and the command line (including `t2k doctor`) follow `[general] language`. Only the background job logs (`~/Library/Logs/t2k/`) are currently in Korean. Before `t2k init` creates `config.toml`, the command line uses English; set `T2K_LANG=ko` for Korean.
 
 > **Terms of use:** t2k fetches YouTube captions with yt-dlp. This may conflict with YouTube's Terms of Service, so use it for personal purposes and at your own risk. Summaries contain other people's content, so keep every site private with Access (step 5). t2k publishes no summaries until Access is confirmed.
+
+## Install with an AI agent
+
+You can let an AI coding agent such as Claude Code do the installation. Open it on your Mac and say:
+
+> Set up tube-to-knowledge on this Mac by following AGENT_INSTALL.md in https://github.com/aidanpark/tube-to-knowledge. Stop and ask me whenever a step needs my account, a token or a browser login.
+
+[AGENT_INSTALL.md](AGENT_INSTALL.md) tells the agent which steps it runs and where it must stop for you. You still do the parts that need your accounts: creating the Discord bot and saving its token, signing in to Cloudflare, and setting up Access in the Cloudflare dashboard. The agent never handles your token or passwords, and it opens a site only after `t2k user ready` has confirmed the Access lock.
 
 ## Install
 
@@ -106,7 +114,7 @@ t2k init                          # creates ~/t2k-data
 - To back up your data, connect a **private** remote repository (`git -C ~/t2k-data remote add origin …`). With a remote, t2k pushes after every change.
 - If `t2k init` reports that it could not commit, set your git identity and run it again: `git config --global user.name "Name"`, `git config --global user.email "you@example.com"`.
 
-**Check:** in `t2k doctor`, the program and data folder sections pass, except for the subdomain and people you have not added yet.
+**Check:** in `t2k doctor`, the Tools and Data folder sections pass, except for the subdomain and people you have not added yet.
 
 ### 3. Create the Discord bot
 
@@ -178,7 +186,7 @@ t2k first checks that the site redirects to the Access sign-in page (302). Only 
 
 Repeat 5-2 to 5-4 for each person. `t2k user list` shows everyone.
 
-**Check:** in `t2k doctor`, the Cloudflare section shows a 302 to the Access login for every site. **If it reports that a site opens without Access, fix the Access setup immediately.**
+**Check:** in `t2k doctor`, the Cloudflare section shows `302 → Access login` for every site. **If it says the site opens without Access, fix the Access setup immediately.**
 
 ### 6. Run in the background
 
@@ -196,7 +204,7 @@ This registers three macOS launchd jobs. They start automatically when you sign 
 
 Use `t2k service status` to check them and `t2k service uninstall` to remove them.
 
-**Check:** `t2k doctor` reports no problems. In the YouTube app, open a video → Share → Discord → your channel. 👀 appears within a minute, and ✅ with the summary link a few minutes later.
+**Check:** `t2k doctor` ends with `No problems found`. In the YouTube app, open a video → Share → Discord → your channel. 👀 appears within a minute, and ✅ with the summary link a few minutes later.
 
 ## Usage
 

@@ -94,7 +94,8 @@ def config_file() -> Path:
 def _load() -> dict:
     f = config_file()
     if not f.exists():
-        raise SystemExit(f"설정 파일이 없음: {f}\n데이터 폴더를 만들려면: t2k init (폴더는 T2K_HOME 으로 지정)")
+        from .i18n import t  # i18n 이 이 모듈을 가져오므로 여기서 가져온다
+        raise SystemExit(t("config.no_config", path=f))
     return tomllib.loads(f.read_text())
 
 
@@ -116,13 +117,15 @@ def users() -> tuple[User, ...]:
 def user(user_id: str) -> User:
     u = next((u for u in users() if u.id == user_id), None)
     if u is None:
-        raise SystemExit(f"없는 사람: {user_id} (config.toml 의 [[user]])")
+        from .i18n import t
+        raise SystemExit(t("config.unknown_user", id=user_id))
     return u
 
 
 def default_user() -> User:
     if not users():
-        raise SystemExit(f"사람이 없음: t2k user add 로 추가한다 ({config_file()})")
+        from .i18n import t
+        raise SystemExit(t("config.no_users", path=config_file()))
     return users()[0]
 
 
