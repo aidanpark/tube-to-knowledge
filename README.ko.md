@@ -6,6 +6,20 @@
 
 오늘날 지식의 많은 부분이 YouTube 영상으로 유통된다. 그러나 영상으로 접한 지식은 보고 나면 흩어지고, 다시 찾기도 어렵다. tube-to-knowledge(`t2k`)는 가치 있는 영상을 디스코드에 공유하면 자막을 바탕으로 AI 가 요약하고 카테고리별로 분류해, 언제든 다시 찾아볼 수 있는 비공개 아카이브 사이트에 쌓는다. 매주 그 주의 지식을 다시 정리하고, 가족이 각자의 아카이브를 따로 가질 수 있다.
 
+## 빠른 시작
+
+AI 코딩 에이전트에게 설치를 맡기면 된다. 맥에서 [Claude Code](https://claude.com/claude-code)를 열고 다음과 같이 요청한다.
+
+> https://github.com/aidanpark/tube-to-knowledge 의 AGENT_INSTALL.md 를 따라 이 맥에 tube-to-knowledge 를 설치해 줘. 내 계정 · 토큰 · 브라우저 로그인이 필요한 단계에서는 멈추고 나에게 요청해.
+
+에이전트는 [AGENT_INSTALL.md](AGENT_INSTALL.md)(영문)의 단계를 실행하고, 계정이 필요한 단계에서 멈춘다. 디스코드 봇을 만들고 토큰을 저장하는 일, Cloudflare 로그인, Access 설정은 사람이 직접 한다. 에이전트는 토큰과 비밀번호를 다루지 않는다. 직접 설치하려면 [설치](#설치) 절을 따른다. 한국어로 쓰려면 처음에 언어를 한국어로 하겠다고 말하면 된다.
+
+**Windows · Linux 나 다른 AI 를 쓴다면:** t2k 는 macOS 와 Claude Code 를 기준으로 만들고 시험했다. 다른 환경에서는 에이전트가 t2k 의 일부(자동 실행 방식, 디스코드 지시의 격리 설정)를 고쳐야 하므로, 요청에 자기 환경을 덧붙이고 에이전트가 무엇을 바꾸는지 확인한다. t2k 는 요약 · 주간 요약 · 디스코드 지시 처리에 Claude Code CLI(`claude -p`)를 호출한다. 다른 에이전트를 쓴다면 이 호출을 자기 에이전트에 맞게 포팅해서 설치하라고 요청에 덧붙인다. 예:
+
+> https://github.com/aidanpark/tube-to-knowledge 의 AGENT_INSTALL.md 를 따라 이 **Windows PC** 에 tube-to-knowledge 를 설치해 줘. 안내는 macOS 기준이니 Windows 에 맞게 바꿔 줘: launchd 대신 작업 스케줄러, macOS 경로 대신 Windows 경로. 안내의 안전 규칙은 그대로 지켜 줘: 내 토큰을 다루지 않기, Access 확인 전에는 사이트를 게시하지 않기, 디스코드 지시는 격리된 공간에서만 처리하기. 내 계정 · 토큰 · 브라우저 로그인이 필요한 단계에서는 멈추고 나에게 요청해.
+
+> 나는 Claude Code 대신 **Codex** 를 쓴다. https://github.com/aidanpark/tube-to-knowledge 의 AGENT_INSTALL.md 를 따라 이 맥에 tube-to-knowledge 를 설치해 줘. t2k 는 summarize.py · weekly.py · agent.py · doctor.py 에서 Claude Code CLI(`claude -p`)를 호출하니, 이 호출을 Codex 의 비대화형 실행으로 포팅해 줘. 디스코드 지시 처리(agent.py)를 포팅할 때는 같은 제한을 걸어 줘: 셸 · 웹 도구 없이, 그 사람의 파일에만 접근하게. 안내의 다른 안전 규칙도 그대로 지키고, 내 계정 · 토큰 · 브라우저 로그인이 필요한 단계에서는 멈추고 나에게 요청해.
+
 ## 특징
 
 - **휘발되지 않는 지식.** 모든 요약은 내 git 저장소에 파일로 남고, 나만의 비공개 사이트에 게시된다. 영상으로 배운 것이 시청 기록과 함께 사라지지 않는다.
@@ -66,14 +80,6 @@ Claude 가 수정을 마치면 바뀐 파일 목록을 답장하고 ⏳ 를 표�
 처음 설치하는 데 약 1시간이 걸린다. 각 단계 끝의 **확인**이 통과하면 다음 단계로 넘어간다. 언제든 `t2k doctor` 를 실행하면 빠진 단계를 표시한다.
 
 > **이용 조건:** 이 프로그램은 yt-dlp 로 YouTube 자막을 받는다. 이 방식이 YouTube 이용 약관과 충돌할 수 있으므로, 본인의 책임으로 개인적인 용도로만 사용한다. 요약에는 남의 영상 내용이 담기므로 사이트는 반드시 Access 로 비공개로 둔다 (5단계). 이 프로그램은 Access 를 확인하기 전에는 요약을 올리지 않는다.
-
-## AI 에이전트로 설치하기
-
-Claude Code 같은 AI 코딩 에이전트에게 설치를 맡길 수 있다. 맥에서 에이전트를 열고 다음과 같이 요청한다.
-
-> https://github.com/aidanpark/tube-to-knowledge 의 AGENT_INSTALL.md 를 따라 이 맥에 tube-to-knowledge 를 설치해 줘. 내 계정 · 토큰 · 브라우저 로그인이 필요한 단계에서는 멈추고 나에게 요청해.
-
-[AGENT_INSTALL.md](AGENT_INSTALL.md)(영문)는 에이전트가 직접 실행할 단계와 사람에게 넘겨야 할 단계를 구분해 둔 안내다. 계정이 필요한 일은 사람이 직접 한다: 디스코드 봇을 만들고 토큰을 저장하는 일, Cloudflare 로그인, Cloudflare 대시보드의 Access 설정이다. 에이전트는 토큰과 비밀번호를 다루지 않고, `t2k user ready` 가 Access 잠금을 확인한 뒤에만 사이트를 연다. 한국어로 쓰려면 처음에 언어를 한국어로 하겠다고 말하면 된다.
 
 ## 설치
 

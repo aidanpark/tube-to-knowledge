@@ -6,6 +6,20 @@ English | [한국어](README.ko.md)
 
 A growing share of what we learn now comes from YouTube. But knowledge picked up from a video fades once the video ends, and it is hard to find again. tube-to-knowledge (`t2k`) keeps the videos worth keeping: share a link to Discord, and AI summarizes the video from its captions, files it into your categories, and adds it to a private, searchable archive site. Every week it distills what you collected, and each family member gets an archive of their own.
 
+## Quick start
+
+Ask an AI coding agent to install it for you. On a Mac with [Claude Code](https://claude.com/claude-code), say:
+
+> Set up tube-to-knowledge on this Mac by following AGENT_INSTALL.md in https://github.com/aidanpark/tube-to-knowledge. Stop and ask me whenever a step needs my account, a token or a browser login.
+
+The agent runs the steps in [AGENT_INSTALL.md](AGENT_INSTALL.md) and stops for the parts that need your accounts: creating the Discord bot and saving its token, signing in to Cloudflare, and turning on Access. It never handles your token or passwords. To do it yourself instead, follow [Install](#install).
+
+**Using Windows, Linux or a different AI?** t2k is built and tested for macOS with Claude Code. On another system the agent has to adapt parts of t2k (the background jobs and the sandbox for Discord requests), so add your environment to the prompt and review what it changes. t2k calls the Claude Code CLI (`claude -p`) for summaries, weekly reviews and Discord requests; with another agent, ask it to port those calls to your agent. For example:
+
+> Set up tube-to-knowledge on this **Windows PC** by following AGENT_INSTALL.md in https://github.com/aidanpark/tube-to-knowledge. The guide is written for macOS, so adapt it to Windows: use Task Scheduler instead of launchd and Windows paths instead of macOS ones. Keep its safety rules: never handle my tokens, never publish a site before Access is confirmed, and keep Discord requests sandboxed. Stop and ask me whenever a step needs my account, a token or a browser login.
+
+> I use **Codex** instead of Claude Code. Set up tube-to-knowledge on this Mac by following AGENT_INSTALL.md in https://github.com/aidanpark/tube-to-knowledge. t2k calls the Claude Code CLI (`claude -p`) in summarize.py, weekly.py, agent.py and doctor.py; port those calls to Codex's non-interactive mode. For Discord requests (agent.py), give the ported agent the same restrictions: no shell or web tools, and access to that person's files only. Keep the guide's other safety rules, and stop and ask me whenever a step needs my account, a token or a browser login.
+
 ## Features
 
 - **Knowledge that stays.** Every summary is saved as a file in your own git repository and published to your private site. What you learned from a video does not disappear with your watch history.
@@ -68,14 +82,6 @@ The first setup takes about an hour. Each step ends with a **Check**; move on wh
 > **Note:** the site, summaries, weekly reviews, Discord replies and the command line (including `t2k doctor`) follow `[general] language`. Only the background job logs (`~/Library/Logs/t2k/`) are currently in Korean. Before `t2k init` creates `config.toml`, the command line uses English; set `T2K_LANG=ko` for Korean.
 
 > **Terms of use:** t2k fetches YouTube captions with yt-dlp. This may conflict with YouTube's Terms of Service, so use it for personal purposes and at your own risk. Summaries contain other people's content, so keep every site private with Access (step 5). t2k publishes no summaries until Access is confirmed.
-
-## Install with an AI agent
-
-You can let an AI coding agent such as Claude Code do the installation. Open it on your Mac and say:
-
-> Set up tube-to-knowledge on this Mac by following AGENT_INSTALL.md in https://github.com/aidanpark/tube-to-knowledge. Stop and ask me whenever a step needs my account, a token or a browser login.
-
-[AGENT_INSTALL.md](AGENT_INSTALL.md) tells the agent which steps it runs and where it must stop for you. You still do the parts that need your accounts: creating the Discord bot and saving its token, signing in to Cloudflare, and setting up Access in the Cloudflare dashboard. The agent never handles your token or passwords, and it opens a site only after `t2k user ready` has confirmed the Access lock.
 
 ## Install
 
