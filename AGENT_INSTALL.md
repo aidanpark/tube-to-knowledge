@@ -1,6 +1,6 @@
 # Installing tube-to-knowledge with an AI coding agent
 
-This file is for an AI coding agent (Claude Code or similar) that a person has asked to set up tube-to-knowledge (`t2k`) on their Mac. It follows the same steps as the [README](README.md#install), split into what you (the agent) do and what only the person can do.
+This file is for an AI coding agent (Claude Code or similar) that a person has asked to set up tube-to-knowledge (`t2k`) on their Mac. It follows the same steps as the [manual installation guide](docs/guide.md#install), split into what you (the agent) do and what only the person can do.
 
 The person starts you with something like:
 
@@ -155,4 +155,4 @@ t2k service install
 
 **[agent]** Watch `~/Library/Logs/t2k/pipeline.log` (these logs are currently in Korean). Times follow the Mac's time zone; weekly reviews run after Sunday midnight local time. Within a minute the message gets 👀; a few minutes later the bot replies with ✅ and the summary link. Opening the link asks the person to sign in through Access.
 
-If something fails, use the Troubleshooting table in the [README](README.md#troubleshooting). When everything works, give the person a short summary: their site addresses, how to save a video, how to make a request, and that `t2k doctor` is the first thing to run when something looks wrong.
+If something fails, use the Troubleshooting table in the [guide](docs/guide.md#troubleshooting). When everything works, give the person a short summary: their site addresses, how to save a video, how to make a request, and that `t2k doctor` is the first thing to run when something looks wrong.
