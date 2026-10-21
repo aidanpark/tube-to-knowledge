@@ -93,3 +93,15 @@ def test_check_site_runs_in_subprocess(data):
     (data / "users/bob/categories.toml").write_text("깨진 파일")
     p = subprocess.run([sys.executable, "-m", "ytbook", "check-site", "bob"], capture_output=True, text=True, env=env)
     assert p.returncode != 0
+
+
+def test_search_path_skips_app_bundle_wrappers(tmp_path, monkeypatch):
+    wrapper = tmp_path / "Term.app/Contents/Resources/bin"
+    real = tmp_path / "local/bin"
+    for d in (wrapper, real):
+        d.mkdir(parents=True)
+        (d / "claude").write_text("#!/bin/sh\n")
+        (d / "claude").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{wrapper}:{real}")
+    assert service.find("claude") == str(real / "claude")
+    assert str(wrapper) not in service.search_path().split(":")

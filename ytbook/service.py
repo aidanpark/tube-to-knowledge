@@ -39,11 +39,25 @@ def plist_path(job: str) -> Path:
     return AGENTS_DIR / f"{label(job)}.plist"
 
 
+def find(tool: str, path: str | None = None) -> str | None:
+    """PATH 에서 tool 을 찾는다. 앱 번들 안의 폴더(*.app/Contents/)는 건너뛴다.
+
+    터미널 앱(cmux 등)이 PATH 앞에 넣는 claude 래퍼는 그 앱의 터미널 안에서만 실제 claude 를 찾을 수 있다.
+    launchd 의 PATH 에 래퍼 폴더가 들어가면 claude 를 실행하지 못한다 (claude not found in PATH).
+    """
+    for d in (path if path is not None else os.environ.get("PATH", "")).split(os.pathsep):
+        if d and ".app/Contents/" not in d + "/":
+            found = shutil.which(tool, path=d)
+            if found:
+                return found
+    return None
+
+
 def search_path() -> str:
     """필요한 프로그램이 있는 폴더 + 시스템 기본 폴더."""
     dirs = []
     for tool in TOOLS:
-        found = shutil.which(tool)
+        found = find(tool)
         if found and str(Path(found).parent) not in dirs:
             dirs.append(str(Path(found).parent))
     for d in ("/usr/bin", "/bin", "/usr/sbin", "/sbin"):

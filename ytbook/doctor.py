@@ -3,6 +3,7 @@
 외부 시스템에 요청을 보내지만 아무것도 바꾸지 않는다. Claude 확인은 짧은 요청 한 번(haiku)을 보낸다.
 """
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -47,9 +48,10 @@ def check_tools(r: Report) -> None:
                        ("npx", "brew install node")):
         found = shutil.which(tool)
         r(OK if found else FAIL, f"{tool}: {found or '없음'}", "" if found else hint)
-    claude = _claude_bin()
+    # 자동 실행(launchd)과 같은 PATH 로 시험한다. 터미널 앱의 claude 래퍼는 그 앱 밖에서 실패한다
+    claude = service.find("claude") or _claude_bin()
     p = _run([claude, "-p", "--model", "haiku", "--output-format", "json", "--no-session-persistence", "--tools", ""],
-             input="OK 라고만 답한다.", cwd=tempfile.gettempdir())
+             input="OK 라고만 답한다.", cwd=tempfile.gettempdir(), env={**os.environ, "PATH": service.search_path()})
     try:
         ok = p is not None and p.returncode == 0 and not json.loads(p.stdout).get("is_error")
     except ValueError:
