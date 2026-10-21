@@ -15,6 +15,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from . import config
@@ -103,6 +104,29 @@ def loaded(job: str) -> bool:
     return _launchctl("print", f"{_domain()}/{label(job)}").returncode == 0
 
 
+_sleep = time.sleep  # 시험에서 바꿔 끼운다
+
+
+def _bootout(job: str, wait: float = 10.0) -> None:
+    """작업을 내리고, 실제로 내려갈 때까지 기다린다. bootout 은 비동기라서 바로 bootstrap 하면
+    상주 작업(bot)이 아직 내려가는 중이어서 "Bootstrap failed: 5: Input/output error" 가 난다."""
+    _launchctl("bootout", f"{_domain()}/{label(job)}")
+    waited = 0.0
+    while loaded(job) and waited < wait:
+        _sleep(0.5)
+        waited += 0.5
+
+
+def _bootstrap(path: Path, attempts: int = 3) -> subprocess.CompletedProcess:
+    """작업을 올린다. 내려가는 중이어서 실패하면 잠시 뒤 다시 시도한다."""
+    for i in range(attempts):
+        r = _launchctl("bootstrap", _domain(), str(path))
+        if r.returncode == 0 or i == attempts - 1:
+            return r
+        _sleep(2)
+    return r
+
+
 def install(jobs: list[str] | None = None, log=print) -> int:
     if sys.platform != "darwin":
         log(t("service.macos_only"))
@@ -112,10 +136,10 @@ def install(jobs: list[str] | None = None, log=print) -> int:
     for job in jobs or list(JOBS):
         p = plist_path(job)
         if loaded(job):  # 설정을 바꾸려면 내렸다가 다시 올린다
-            _launchctl("bootout", f"{_domain()}/{label(job)}")
+            _bootout(job)
         with p.open("wb") as f:
             plistlib.dump(plist(job), f)
-        r = _launchctl("bootstrap", _domain(), str(p))
+        r = _bootstrap(p)
         if r.returncode != 0:
             log(t("service.install_failed", label=label(job), error=(r.stderr or r.stdout).strip()))
             return 1

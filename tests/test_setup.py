@@ -111,3 +111,29 @@ def test_search_path_skips_app_bundle_wrappers(tmp_path, monkeypatch):
     monkeypatch.setenv("PATH", f"{wrapper}:{real}")
     assert service.find("claude") == str(real / "claude")
     assert str(wrapper) not in service.search_path().split(":")
+
+
+def test_service_install_waits_for_bootout_and_retries_bootstrap(monkeypatch, tmp_path):
+    """bootout 은 비동기다: 내려갈 때까지 기다리고, bootstrap 이 실패하면 다시 시도한다 (bot 의 Bootstrap failed: 5)."""
+    monkeypatch.setattr(service.sys, "platform", "darwin")
+    monkeypatch.setattr(service, "AGENTS_DIR", tmp_path / "agents")
+    monkeypatch.setattr(service, "LOG_DIR", tmp_path / "logs")
+    monkeypatch.setattr(service, "_sleep", lambda s: None)
+    calls, state = [], {"prints": 0, "boots": 0}
+
+    def fake(*args):
+        calls.append(args[0])
+        if args[0] == "print":  # 처음 한 번은 올라가 있고, bootout 뒤 두 번 더 확인하는 동안 아직 내려가는 중
+            state["prints"] += 1
+            return subprocess.CompletedProcess(args, 0 if state["prints"] <= 3 else 113, "", "")
+        if args[0] == "bootstrap":
+            state["boots"] += 1
+            ok = state["boots"] > 1
+            return subprocess.CompletedProcess(args, 0 if ok else 5, "", "" if ok else "Bootstrap failed: 5: Input/output error")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(service, "_launchctl", fake)
+    out = []
+    assert service.install(["bot"], log=out.append) == 0
+    assert calls.count("bootout") == 1 and calls.count("bootstrap") == 2
+    assert calls.index("bootstrap") > max(i for i, c in enumerate(calls) if c == "print")  # 내려간 것을 확인한 뒤에 올린다
