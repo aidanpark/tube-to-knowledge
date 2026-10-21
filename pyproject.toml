@@ -1,0 +1,22 @@
+[project]
+name = "ytbook"
+version = "0.1.0"
+description = "디스코드에 YouTube 링크를 올리면 Claude 가 요약해 나만의 요약 사이트(Cloudflare Workers)에 정리한다"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.32",
+    "jinja2>=3.1",
+    "discord-py>=2.4",
+]
+
+[project.scripts]
+ytbook = "ytbook.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

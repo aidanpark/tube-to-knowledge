@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{# 음악 영상: 내용 요약 없이 곡 정보만 보여 준다 #}
+{% block body %}
+<div class="doc">
+<nav class="crumbs" aria-label="위치">
+  <a href="{{ root }}index.html">홈</a>{{ icon("chev", 14, "#5F6368") }}<a href="{{ root }}{{ c.href }}">{{ v.cat.name }}</a>
+</nav>
+
+<div class="dhead">
+  <h1>{{ v.title }}</h1>
+  <div class="pills lg"><span class="pill c-sky">♪ {{ v.format }}</span>{% if v.short %}<span class="pill c-brand">Shorts</span>{% endif %}</div>
+</div>
+
+<a class="player" href="{{ v.url }}" aria-label="YouTube에서 재생" style="background-image: url('{{ v.thumb_large }}')">
+  <span class="play">{{ icon("play", 24) }}</span><span class="dur">{{ v.duration }}</span>
+</a>
+
+<dl class="meta">
+  <dt>가수</dt><dd>{{ v.artist }}</dd>
+  <dt>곡</dt><dd>{{ v.song }}</dd>
+  {% if v.album %}<dt>앨범</dt><dd>{{ v.album }}</dd>{% endif %}
+  <dt>발매</dt><dd class="mono">{{ v.releaseYear or "-" }}</dd>
+  <dt>채널</dt><dd>{{ v.channel }}</dd>
+  <dt>게시</dt><dd class="mono">{{ v.published or "-" }}</dd>
+  <dt>원본</dt><dd><a href="{{ v.url }}" style="font-weight: 500">{{ v.url_label }}</a></dd>
+</dl>
+
+{% if v.songs %}
+<section class="sec">
+  <h2>곡 목록</h2>
+  <ol class="plain">{% for x in v.songs %}<li>{{ x }}</li>{% endfor %}</ol>
+</section>
+{% endif %}
+
+{% if v.credits %}
+<section class="sec">
+  <h2>크레딧</h2>
+  <ul class="plain">{% for x in v.credits %}<li>{{ x }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if v.categoryProposal %}
+<section class="sec">
+  <h2>카테고리 추가 제안</h2>
+  <p>{{ v.categoryProposal }}</p>
+  {% if v.proposal_href %}<div class="rm-row" style="margin-top: 12px"><a class="rm-btn" href="{{ root }}{{ v.proposal_href }}">이 카테고리 만들기</a></div>{% endif %}
+</section>
+{% endif %}
+
+<section class="tags">
+  {% for t in v.tags %}<a class="tag" href="{{ root }}search.html?q={{ t | urlencode }}">#{{ t }}</a>{% endfor %}
+</section>
+
+{% include "_manage.html" %}
+{% include "_related.html" %}
+</div>
+{% endblock %}

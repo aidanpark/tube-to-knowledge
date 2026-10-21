@@ -1,0 +1,15 @@
+{% from "_macros.html" import icon %}
+<nav class="related" aria-label="다른 요약">
+  {% if v.weekly %}
+  <a class="ccard c-lime" href="{{ root }}{{ v.weekly.href }}" style="flex-direction: row; align-items: center; justify-content: space-between">
+    <span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 500">이 요약이 포함된 주간 요약</span><span style="font-size: 16px; font-weight: 500">{{ v.cat.name }} · {{ v.weekly.label }}</span></span>
+    {{ icon("arrow", 20) }}
+  </a>
+  {% endif %}
+  {% if prev or next %}
+  <div class="grid2 prevnext">
+    {% if prev %}<a href="{{ root }}{{ prev.href }}"><small>이전 요약</small><span>{{ prev.title }}</span></a>{% else %}<span></span>{% endif %}
+    {% if next %}<a class="next" href="{{ root }}{{ next.href }}"><small>다음 요약</small><span>{{ next.title }}</span></a>{% endif %}
+  </div>
+  {% endif %}
+</nav>

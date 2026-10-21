@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, vrow %}
+{% block body %}
+<nav class="crumbs" aria-label="위치">
+  <a href="{{ root }}categories.html">카테고리</a>{{ icon("chev", 14, "#5F6368") }}<span class="here">{{ c.cat.name }}</span>
+</nav>
+
+<section class="chead {{ c.bg_class }}">
+  <span class="id" style="color: {{ c.fg }}">{{ c.cat.id }}</span>
+  <h1>{{ c.cat.name }}</h1>
+  <p>{{ c.cat.scope }}</p>
+  <div class="stats">
+    <div><b>{{ c.count }}</b><span>요약</span></div>
+    <div><b>{{ c.week_count }}</b><span>이번 주</span></div>
+    <div><b>{{ c.top_count }}</b><span>별점 4 이상</span></div>
+  </div>
+</section>
+
+{% if c.weeklies %}
+<section class="sec">
+  <h2 style="margin-bottom: 14px">주간 요약</h2>
+  <div class="cards">
+    {% for w in c.weeklies %}
+    {% if loop.first %}
+    <a class="ccard c-brand" href="{{ root }}{{ w.href }}" style="color: #FFFFFF">
+      <span style="font-size: 13px; font-weight: 500; color: var(--green)">최신 · {{ w.label }}</span>
+      <span style="font-size: 18px; font-weight: 500">{{ w.range }}</span>
+      <span style="font-size: 14px; color: var(--sky)">요약 {{ w.count }}편</span>
+    </a>
+    {% else %}
+    <a class="vrow" href="{{ root }}{{ w.href }}" style="border: 1px solid var(--line); border-radius: 24px"><span class="title">{{ w.label }} · {{ w.range }}</span><span class="pills"><span class="when">요약 {{ w.count }}편</span></span></a>
+    {% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="sec">
+  <div class="sec-head" style="padding-bottom: 12px">
+    <h2>요약 {{ c.count }}편</h2>
+    {% if c.videos %}
+    <label class="sort">정렬
+      <select data-sort>
+        <option value="date">최신순</option>
+        <option value="rating">별점순</option>
+        <option value="life">수명 긴 순</option>
+      </select>
+    </label>
+    {% endif %}
+  </div>
+  {% if c.videos %}
+  <div class="chips" style="padding: 0 0 14px" role="group" aria-label="필터" data-filter-group>
+    <button type="button" class="chip" aria-pressed="true" data-filter="all">전체</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="life:짧음">수명 짧음</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="life:중간">수명 중간</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="life:긺">수명 긺</button>
+    <button type="button" class="chip" aria-pressed="false" data-filter="short">Shorts</button>
+  </div>
+  <div class="rows" data-filter-target>
+    {% for v in c.videos %}{{ vrow(v, root) }}{% endfor %}
+  </div>
+  <div class="empty" data-filter-empty hidden style="margin: 0"><b>조건에 맞는 요약이 없습니다</b>다른 필터를 선택하십시오.</div>
+  {% else %}
+  <div class="empty" style="margin: 0"><b>아직 요약이 없습니다</b></div>
+  {% endif %}
+</section>
+{% if c.cat.id != other_id %}
+<section class="manage" data-cat-delete="{{ c.cat.id }}" data-name="{{ c.cat.name }}">
+  <div data-state="idle"><div class="rm-row"><button type="button" class="rm-btn" data-act="ask">이 카테고리 삭제</button></div></div>
+  <div data-state="confirm" hidden>
+    <p>‘{{ c.cat.name }}’ 카테고리를 삭제할까요?{% if c.count %} 요약 {{ c.count }}편은 ‘기타’로 옮겨집니다.{% endif %}</p>
+    <div class="rm-row"><button type="button" class="rm-btn danger" data-act="remove">삭제</button><button type="button" class="rm-btn" data-act="cancel">취소</button></div>
+  </div>
+  <div data-state="pending" hidden>
+    <p>삭제 대기 중입니다. 곧 반영됩니다.</p>
+    <div class="rm-row"><button type="button" class="rm-btn" data-act="undo">삭제 취소</button></div>
+  </div>
+  <p class="rm-msg" role="status"></p>
+</section>
+{% endif %}
+<div class="spacer"></div>
+{% endblock %}
+{% block scripts %}<script src="{{ root }}assets/filter.js?v={{ build_id }}"></script>{% endblock %}
