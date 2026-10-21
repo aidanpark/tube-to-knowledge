@@ -6,11 +6,6 @@
 
 오늘날 지식의 많은 부분이 YouTube 영상으로 유통된다. 그러나 영상으로 접한 지식은 보고 나면 흩어지고, 다시 찾기도 어렵다. tube-to-knowledge(`t2k`)는 가치 있는 영상을 디스코드에 보내기만 하면 자막을 바탕으로 Claude 로 요약하고 카테고리별로 분류해, 언제든 다시 찾아볼 수 있는 비공개 아카이브 사이트에 쌓는다. 매주 그 주의 지식을 다시 정리하고, 가족이 각자의 아카이브를 따로 가질 수 있다.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/ko/architecture-dark.png">
-  <img alt="t2k 구조: 가족이 디스코드에 올린 링크를 맥의 t2k 가 읽어 YouTube 자막을 추출하고 Claude Code 로 요약한 뒤, 데이터 저장소에 커밋하고 Cloudflare Workers 에 배포한다. 사이트는 Cloudflare Access 로 로그인한 가족만 열람하며, 사이트에서 한 조작은 KV 대기열을 거쳐 5분마다 반영된다." src="docs/images/ko/architecture-light.png">
-</picture>
-
 ## 특징
 
 - **휘발되지 않는 지식.** 모든 요약은 내 git 저장소에 파일로 남고, 나만의 비공개 사이트에 게시된다. 영상으로 배운 것이 시청 기록과 함께 사라지지 않는다.
@@ -249,6 +244,11 @@ cd ~/tube-to-knowledge && git pull && uv sync && t2k service install && t2k doct
 - **비밀:** 디스코드 토큰은 `~/.config/t2k/discord.env`(권한 600)에, Cloudflare 로그인 정보는 wrangler 가 보관한다. 데이터 폴더와 이 저장소에는 비밀을 두지 않는다. 자막 원문(`transcripts/`)은 커밋하지 않는다.
 
 ## 구성
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/ko/architecture-dark.png">
+  <img alt="t2k 구조: 가족이 디스코드에 올린 링크를 맥의 t2k 가 읽어 YouTube 자막을 추출하고 Claude Code 로 요약한 뒤, 데이터 저장소에 커밋하고 Cloudflare Workers 에 배포한다. 사이트는 Cloudflare Access 로 로그인한 가족만 열람하며, 사이트에서 한 조작은 KV 대기열을 거쳐 5분마다 반영된다." src="docs/images/ko/architecture-light.png">
+</picture>
 
 | 모듈 | 하는 일 |
 |---|---|

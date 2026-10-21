@@ -6,11 +6,6 @@ English | [한국어](README.ko.md)
 
 A growing share of what we learn now comes from YouTube. But knowledge picked up from a video fades once the video ends, and it is hard to find again. tube-to-knowledge (`t2k`) keeps the videos worth keeping: share a link to Discord, and it summarizes the video from its captions with Claude, files it into your categories, and adds it to a private, searchable archive site. Every week it distills what you collected, and each family member gets an archive of their own.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/architecture-dark.png">
-  <img alt="Architecture: family members share links in Discord; t2k on a Mac reads them, gets captions from YouTube, summarizes with Claude Code, commits to a data repository and deploys to Cloudflare Workers. Each site is behind Cloudflare Access; edits made on the site come back through a KV queue every 5 minutes." src="docs/images/en/architecture-light.png">
-</picture>
-
 ## Features
 
 - **Knowledge that stays.** Every summary is saved as a file in your own git repository and published to your private site. What you learned from a video does not disappear with your watch history.
@@ -251,6 +246,11 @@ cd ~/tube-to-knowledge && git pull && uv sync && t2k service install && t2k doct
 - **Secrets:** the Discord token lives in `~/.config/t2k/discord.env` (mode 600) and the Cloudflare sign-in is kept by wrangler. Neither the data folder nor this repository holds secrets. Raw captions (`transcripts/`) are never committed.
 
 ## Project layout
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/architecture-dark.png">
+  <img alt="Architecture: family members share links in Discord; t2k on a Mac reads them, gets captions from YouTube, summarizes with Claude Code, commits to a data repository and deploys to Cloudflare Workers. Each site is behind Cloudflare Access; edits made on the site come back through a KV queue every 5 minutes." src="docs/images/en/architecture-light.png">
+</picture>
 
 | Module | What it does |
 |---|---|
