@@ -111,7 +111,7 @@ def flow(t, x) -> str:
 
 
 def instruct(t, x) -> str:
-    """디스코드 지시로 사이트를 고치는 흐름 (네 줄 스윔레인)."""
+    """채팅 지시로 사이트를 고치는 흐름 (네 줄 스윔레인)."""
     lanes = x["lanes"]
     lx, top, lane_h, right = 40, 24, 84, 1240
     col0, slot, nw, nh = 200, 172, 148, 56
@@ -158,9 +158,9 @@ def instruct(t, x) -> str:
 TEXT = {
     "ko": {
         "flow": ("링크 하나가 요약 사이트가 되기까지",
-                 "디스코드에 올린 YouTube 링크가 자막 추출, Claude 요약과 분류, 사이트 배포, 디스코드 알림을 거쳐 정리되는 다섯 단계."),
-        "flow_steps": [("링크 올리기", "디스코드 채널에 붙여 넣기"), ("자막 추출", "yt-dlp"), ("요약 · 분류", "내 관심사와 카테고리로"),
-                       ("사이트 배포", "로그인해야 열리는 사이트"), ("디스코드 알림", "✅ 요약 주소로 답장")],
+                 "채팅으로 올린 YouTube 링크가 자막 추출, 모델의 요약과 분류, 사이트 배포, 완료 알림을 거쳐 정리되는 다섯 단계."),
+        "flow_steps": [("링크 올리기", "내 채널에 붙여 넣기"), ("자막 추출", "yt-dlp"), ("요약 · 분류", "내 관심사와 카테고리로"),
+                       ("사이트 배포", "로그인해야 열리는 사이트"), ("완료 알림", "✅ 요약 주소로 답장")],
         "flow_auto": "여기부터 자동 · 1분 주기",
         "instruct": ("채팅 한 줄로 사이트 고치기",
                      "채팅 UI 로 보낸 지시를 t2k 가 받아 사용자의 모델이 그 사람의 파일만 고치고, 승인을 받은 뒤 데이터에 커밋하고(백업 원격이 있으면 푸시) 그 사람의 사이트만 다시 배포하는 흐름."),
@@ -171,7 +171,7 @@ TEXT = {
     },
     "en": {
         "flow": ("From one link to a summary page",
-                 "Five steps: a YouTube link shared to Discord gets its captions, a Claude summary and category, a page on the private site, and a Discord reply."),
+                 "Five steps: a YouTube link shared in chat gets its captions, a summary and category from your model, a page on the private site, and a reply in chat."),
         "flow_steps": [("Share a link", "Paste into your channel"), ("Get captions", "yt-dlp"), ("Summarize & file", "Using your interests"),
                        ("Publish", "To your private site"), ("Notify", "✅ Reply with the link")],
         "flow_auto": "Automatic from here · every minute",

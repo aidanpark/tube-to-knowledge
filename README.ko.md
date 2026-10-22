@@ -41,7 +41,7 @@ AI 코딩 에이전트에게 설치를 맡기면 된다. 맥에서 [Claude Code]
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/ko/flow-dark.png">
-  <img alt="처리 다섯 단계: 링크 올리기, 자막 추출, 관심사와 카테고리에 맞춘 요약과 분류, 비공개 사이트에 배포, 디스코드에 요약 주소로 답장. 첫 단계 뒤로는 모두 자동이다." src="docs/images/ko/flow-light.png">
+  <img alt="처리 다섯 단계: 링크 올리기, 자막 추출, 관심사와 카테고리에 맞춘 요약과 분류, 비공개 사이트에 배포, 채팅으로 요약 주소 답장. 첫 단계 뒤로는 모두 자동이다." src="docs/images/ko/flow-light.png">
 </picture>
 
 링크를 공유하는 것 외에는 모두 자동이다. 맥이 자막을 읽고, AI 가 요약하고 분류하고, 사이트가 갱신되고, 디스코드로 완료를 알린다.

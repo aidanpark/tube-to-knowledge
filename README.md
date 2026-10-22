@@ -41,7 +41,7 @@ Prefer to do it yourself? Follow the [guide](docs/guide.md#install).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/flow-dark.png">
-  <img alt="Five steps: share a link, get captions, summarize and file using your interests, publish to your private site, reply in Discord with the link. Everything after the first step is automatic." src="docs/images/en/flow-light.png">
+  <img alt="Five steps: share a link, get captions, summarize and file using your interests, publish to your private site, reply in chat with the link. Everything after the first step is automatic." src="docs/images/en/flow-light.png">
 </picture>
 
 You share a link. Everything after that happens on its own: your Mac reads the captions, AI writes the summary and files it, your site is updated, and Discord tells you it is ready.
