@@ -20,6 +20,14 @@ Follow these for the whole installation. They protect the person's accounts and 
 
 In the steps below, **[agent]** marks work you do and **[person]** marks a stop point: explain what is needed, wait for the person to confirm, then continue.
 
+## If the person's setup differs
+
+The steps below assume macOS, Claude Code, Discord and Cloudflare. The person may ask you to use something else: Windows or Linux, another AI agent, another messenger, or another host. That is a customization the project does not support, so:
+
+- Port only the parts the person asked to change, and keep the collect-and-organize pipeline as it is.
+- Keep every rule above in the ported version. In particular, a ported request handler (`agent.py`) gets the same limits: no shell or web tools, and access to that person's files only. A ported host must keep each site private until access control is confirmed.
+- Tell the person which files you changed and why, and note that `t2k doctor` checks only the supported setup.
+
 ## Step 0 — Ask first
 
 **[agent]** Ask the person, then write down the answers for later steps:

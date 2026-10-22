@@ -15,6 +15,8 @@ Manual installation, everyday use, troubleshooting, security, and how the pieces
 | **A Cloudflare account** | The archive sites (Workers) and access control (Access). Personal use fits in the free tier |
 | **Basic terminal skills** | Enough to paste and run commands |
 
+> **Swapping parts:** the table above is the setup t2k supports. The core of t2k is the pipeline that collects videos and organizes them into summaries; the computer, AI, messenger and host around it can be replaced, but that is your own customization and this guide does not cover it. The parts to port are the `claude -p` calls in `summarize.py`, `weekly.py`, `agent.py` and `doctor.py` (AI), `discord_inbox.py` and `bot.py` (messenger), `service.py` (background jobs), and `deploy.py`, `site_ops.py` and `t2k/worker/` (hosting and access control). Keep the safety rules of [AGENT_INSTALL.md](../AGENT_INSTALL.md#rules) in whatever you build.
+
 The first setup takes about an hour. Each step ends with a **Check**; move on when it passes. Run `t2k doctor` at any time to see what is missing.
 
 > **Note:** the site, summaries, weekly reviews, Discord replies and the command line (including `t2k doctor`) follow `[general] language` in your data folder's `config.toml`. The background job logs (`~/Library/Logs/t2k/`) and the progress lines of `t2k sync-ops` and `t2k weekly` are currently in Korean. Before `t2k init` creates `config.toml`, the command line uses English, or Korean with `T2K_LANG=ko`; once `config.toml` exists, `T2K_LANG` is ignored.

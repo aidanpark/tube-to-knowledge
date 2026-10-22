@@ -14,7 +14,7 @@ Ask an AI coding agent to set it up. On a Mac with [Claude Code](https://claude.
 
 The agent does the setup and stops when it needs you: to create a Discord bot, sign in to Cloudflare, and lock your site. It never handles your passwords or tokens.
 
-**Using Windows, Linux or a different AI?** Add your setup to the request and ask the agent to adapt it. tube-to-knowledge is built for macOS and Claude Code, so the agent may need to change a few parts; review what it changes. For example:
+**Using a different computer, AI or messenger?** Add your setup to the request and ask the agent to port those parts. tube-to-knowledge supports macOS, Claude Code, Discord and Cloudflare; any other setup is your own customization, so review what the agent changes. For example:
 
 > Set up tube-to-knowledge on this **Windows PC** by following AGENT_INSTALL.md in https://github.com/aidanpark/tube-to-knowledge. The guide is written for macOS, so adapt it to Windows: use Task Scheduler instead of launchd and Windows paths instead of macOS ones. Keep its safety rules: never handle my tokens, never publish a site before Access is confirmed, and keep Discord requests sandboxed. Stop and ask me whenever a step needs my account, a token or a browser login.
 
@@ -63,10 +63,14 @@ You see what will change and reply "approve" or "cancel". Only your own site is 
 
 ## What you need
 
+The supported setup:
+
 - A Mac that stays on, on your home internet
 - A Claude subscription, for the AI that writes the summaries
 - A Discord account and server, free
 - A Cloudflare account, free for personal use
+
+**Swap any part you like.** What tube-to-knowledge offers is the pipeline that collects knowledge from videos and organizes it. The parts around that pipeline are your choice: a Windows PC or Linux server instead of a Mac, another AI instead of Claude, Telegram or Slack instead of Discord, another host instead of Cloudflare. The project supports only the setup above, so a swap is a customization you make yourself. An AI coding agent can do the porting, as in the examples under [Get started](#get-started).
 
 ## Private by design
 
