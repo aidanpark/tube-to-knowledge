@@ -50,7 +50,7 @@ You share a link. Everything after that happens on its own: your Mac reads the c
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/instruct-dark.png">
-  <img alt="Request flow: send a request in Discord, the change is made on your files only, you approve or cancel, and only your site is updated." src="docs/images/en/instruct-light.png">
+  <img alt="Request flow: send a request from your chat app, your model changes only your files, you approve or cancel, the change is saved to your data, and only your site is redeployed." src="docs/images/en/instruct-light.png">
 </picture>
 
 Write a message without a link in your channel, for example:

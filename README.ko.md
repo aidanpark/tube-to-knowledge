@@ -50,7 +50,7 @@ AI 코딩 에이전트에게 설치를 맡기면 된다. 맥에서 [Claude Code]
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/ko/instruct-dark.png">
-  <img alt="지시 흐름: 디스코드로 요청하면 내 파일만 고치고, 승인하거나 취소하면, 내 사이트만 갱신된다." src="docs/images/ko/instruct-light.png">
+  <img alt="지시 흐름: 채팅으로 요청하면 내 모델이 내 파일만 고치고, 승인하거나 취소한다. 승인하면 내 데이터에 저장하고 내 사이트만 다시 배포한다." src="docs/images/ko/instruct-light.png">
 </picture>
 
 내 채널에 링크 없이 글을 쓰면 된다. 예:
