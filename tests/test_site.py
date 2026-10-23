@@ -26,8 +26,11 @@ def built(tmp_path):
     full = validate(json.loads(json.dumps(FULL)), short=False)
     full["title"] = "<script>alert(1)</script>"  # 모델이 생성한 값은 이스케이프되어야 한다
     write(src, {**TR, "title": "<script>alert(1)</script>"}, full, "2026-10-19")
+    short = validate(SHORT, short=True)
+    short["links"] = [{"url": "https://github.com/d/e", "label": "댓글의 저장소"},
+                      {"url": "https://github.com/herdrdev/herdr", "label": "검색한 저장소", "estimated": True}]
     write(src, {**TR, "video_id": "shortshort1", "short": True, "duration": 50, "duration_human": "0:50",
-                "url": "https://www.youtube.com/shorts/shortshort1"}, validate(SHORT, short=True), "2026-10-12")
+                "url": "https://www.youtube.com/shorts/shortshort1"}, short, "2026-10-12")
     state.mkdir()
     (state / "failed.jsonl").write_text('{"video_id": "failedvid01"}\n{"video_id": "failedvid01"}\n{"video_id": "failedvid02"}\n')
     site.build(src, out, state, NOW)
@@ -61,6 +64,8 @@ def test_summary_page_links(built):
 def test_short_page(built):
     html = (built / "v/shortshort1.html").read_text()
     assert "youtube.com/shorts/shortshort1" in html and "핵심" in html and "타임스탬프" not in html
+    assert html.count('class="pill c-amber">추정<') == 1  # 검색으로 찾은 링크에만
+    assert "검색한 저장소</span><span class=\"pill c-amber\">추정" in html
 
 
 def test_home_counts_this_week_and_failed(built):

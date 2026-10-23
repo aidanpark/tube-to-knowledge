@@ -125,6 +125,29 @@ def test_summarize_maps_ref_to_comment_link(monkeypatch, tmp_path):
     _, s = summarize.summarize({**TR, "transcript": "x", "uploader_comments": ["https://github.com/d/e"]})
     assert s["links"] == [{"url": "https://github.com/d/e", "label": "스킬 저장소"}]
 
+
+def test_validate_repos_drops_malformed():
+    d = {**FULL, "repos": [{"name": "awesome-llm-apps", "label": "LLM 앱 모음"}, {"name": "owner/repo", "label": "x"},
+                           {"name": "ok", "label": " "}, "bad", {"name": "orca"}]}
+    assert validate(d, short=False)["repos"] == [{"name": "awesome-llm-apps", "label": "LLM 앱 모음"}]
+
+
+def test_summarize_adds_searched_repos_as_estimated(monkeypatch, tmp_path):
+    reply = {**FULL, "links": [{"ref": 1, "label": "스킬 저장소"}], "repos": [{"name": "herdr", "label": "터미널 도구"}]}
+    monkeypatch.setattr(summarize, "call_claude", lambda p: json.dumps(reply, ensure_ascii=False))
+    monkeypatch.setattr(summarize.config, "path", lambda name: tmp_path / name)
+    asked = []
+
+    def find(repos, known, limit):
+        asked.append((repos, known, limit))
+        return [{"url": "https://github.com/herdrdev/herdr", "label": "터미널 도구", "estimated": True}]
+    monkeypatch.setattr(summarize.repo_search, "find", find)
+    path, s = summarize.summarize({**TR, "transcript": "x", "uploader_comments": ["https://github.com/d/e"]})
+    assert asked == [([{"name": "herdr", "label": "터미널 도구"}], ["https://github.com/d/e"], summarize.MAX_LINKS - 1)]
+    assert "repos" not in s and s["links"][1]["estimated"] is True
+    text = path.read_text()
+    assert "- [터미널 도구](https://github.com/herdrdev/herdr) (추정)" in text and "repos:" not in text
+
 def test_video_id_forms():
     for u in ["abcdefghijk", "https://youtu.be/abcdefghijk", "https://www.youtube.com/shorts/abcdefghijk",
               "https://www.youtube.com/watch?v=abcdefghijk&t=10s"]:

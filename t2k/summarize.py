@@ -22,7 +22,7 @@ from pathlib import Path
 
 import requests
 
-from . import config, i18n
+from . import config, i18n, repo_search
 from .i18n import t
 
 
@@ -76,7 +76,8 @@ SCHEMA_FULL = """{
   "watchReason": "시청 권유 판단 근거 1~2문장"
 }
 claims 는 2~6개.
-links: 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~10개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다."""
+links: 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~10개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다.
+repos: 영상이 소개하는 GitHub 저장소(스킬 · 플러그인 · 오픈소스 프로젝트 포함) 가운데 링크 목록에 주소가 없는 것의 이름을 [{"name": "저장소 이름", "label": "무엇인지 30자 이내"}] 로 0~10개 쓴다. 이름은 게시자 댓글 · 설명란 · 제목에 적힌 철자를 그대로 쓰고, 자막에만 나오면 자동 자막의 음차(예: "임팩커블")를 영어 철자로 바로잡되 확실하지 않으면 쓰지 않는다. 소유자(owner/) · URL · 설명은 쓰지 않고 저장소 이름만 쓴다. 프로그램이 이 이름으로 GitHub 를 검색하여 주소를 찾는다. 없으면 빈 배열 [] 이다."""
 
 SCHEMA_SHORT = """{
   "category": "카테고리 목록의 값 하나",
@@ -90,7 +91,8 @@ SCHEMA_SHORT = """{
   "recommendation": "반복필수시청|필수시청|시간되면 시청|요약으로 충분|시청 불필요 삭제추천",
   "watchReason": "시청 권유 판단 근거 1문장"
 }
-links: 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~10개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다."""
+links: 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~10개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다.
+repos: 영상이 소개하는 GitHub 저장소(스킬 · 플러그인 · 오픈소스 프로젝트 포함) 가운데 링크 목록에 주소가 없는 것의 이름을 [{"name": "저장소 이름", "label": "무엇인지 30자 이내"}] 로 0~10개 쓴다. 이름은 게시자 댓글 · 설명란 · 제목에 적힌 철자를 그대로 쓰고, 자막에만 나오면 자동 자막의 음차(예: "임팩커블")를 영어 철자로 바로잡되 확실하지 않으면 쓰지 않는다. 소유자(owner/) · URL · 설명은 쓰지 않고 저장소 이름만 쓴다. 프로그램이 이 이름으로 GitHub 를 검색하여 주소를 찾는다. 없으면 빈 배열 [] 이다."""
 
 
 # 음악 형식: 노래 · 공연 · 뮤직비디오는 내용을 요약하지 않고 곡 정보만 정리한다
@@ -130,7 +132,8 @@ SCHEMA_FULL_EN = """{
   "watchReason": "1 to 2 sentences explaining the recommendation"
 }
 claims: 2 to 6.
-links: from the link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 10 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers."""
+links: from the link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 10 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers.
+repos: among the GitHub repositories the video introduces (including skills, plugins, and open-source projects), write the names of those whose URL is not in the link list as [{"name": "repository name", "label": "what it is, 40 characters or fewer"}], 0 to 10. Copy the spelling written in the uploader comments, the description, or the title; if a name appears only in the transcript, correct the auto-caption spelling, but leave it out if you are not sure. Write only the repository name, without an owner (owner/), URL, or description. The program searches GitHub with this name to find the URL. If there are none, use an empty array []."""
 
 SCHEMA_SHORT_EN = """{
   "category": "one value from the category list",
@@ -144,7 +147,8 @@ SCHEMA_SHORT_EN = """{
   "recommendation": "must-rewatch|must-watch|watch-if-time|summary-enough|skip",
   "watchReason": "1 sentence explaining the recommendation"
 }
-links: from the link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 10 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers."""
+links: from the link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 10 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers.
+repos: among the GitHub repositories the video introduces (including skills, plugins, and open-source projects), write the names of those whose URL is not in the link list as [{"name": "repository name", "label": "what it is, 40 characters or fewer"}], 0 to 10. Copy the spelling written in the uploader comments, the description, or the title; if a name appears only in the transcript, correct the auto-caption spelling, but leave it out if you are not sure. Write only the repository name, without an owner (owner/), URL, or description. The program searches GitHub with this name to find the URL. If there are none, use an empty array []."""
 
 SCHEMA_MUSIC_EN = """{
   "kind": "music",
@@ -340,6 +344,18 @@ def validate_links(d: dict, urls: list[str]) -> list[dict]:
     return out[:MAX_LINKS]
 
 
+def validate_repos(d: dict) -> list[dict]:
+    """모델이 추출한 저장소 이름(repo_search 가 주소를 찾는다). 형식이 틀린 항목은 버린다 (링크는 부가 정보다)."""
+    out = []
+    for x in d.get("repos") or []:
+        if not isinstance(x, dict) or not isinstance(x.get("name"), str) or not isinstance(x.get("label"), str):
+            continue
+        name, lbl = x["name"].strip(), x["label"].strip()
+        if repo_search.NAME_RE.match(name) and lbl:
+            out.append({"name": name, "label": lbl[:40]})
+    return out[:MAX_LINKS]
+
+
 def _category(d: dict) -> dict:
     cat = _str(d, "category")
     if not config.category_by_key(cat):
@@ -390,6 +406,7 @@ def validate(d: dict, short: bool, urls: list[str] | None = None, music: bool = 
     out["quality"] = d["quality"]
     out["watchReason"] = _str(d, "watchReason")
     out["links"] = validate_links(d, urls or [])
+    out["repos"] = validate_repos(d)  # summarize 가 주소로 바꾸고 지운다 (요약 파일에 남기지 않는다)
     if short:
         out["keyPoint"] = _str(d, "keyPoint")
         out["tags"] = _strlist(d, "tags", 1, 5)
@@ -481,7 +498,8 @@ def render(tr: dict, s: dict, summarized: str) -> str:
         lines += [f"## {t('md.timestamps')}", ""] + [f"- [{x['time']}]({time_link(vid, x['time'])}) {x['topic']}"
                                                      for x in s["timestamps"]] + [""]
     if s.get("links"):
-        lines += [f"## {t('md.links')}", ""] + [f"- [{x['label']}]({x['url']})" for x in s["links"]] + [""]
+        lines += [f"## {t('md.links')}", ""] + [f"- [{x['label']}]({x['url']})" + (f" ({t('md.estimated')})" if x.get("estimated") else "")
+                                                for x in s["links"]] + [""]
     lines += [f"## {t('md.watch_reason')}", "", s["watchReason"], ""]
     if s.get("categoryProposal"):
         lines += [f"## {t('md.category_proposal')}", "", s["categoryProposal"], ""]
@@ -513,6 +531,9 @@ def summarize(tr: dict, attempts: int = 2) -> tuple[Path, dict]:
                 raise
     else:
         raise last
+    repos = s.pop("repos", [])
+    if repos and len(s["links"]) < MAX_LINKS:  # 이름만 나온 저장소는 GitHub 검색으로 찾는다 (estimated)
+        s["links"] += repo_search.find(repos, link_list(tr), MAX_LINKS - len(s["links"]))
     summarized = now().strftime("%Y-%m-%d")
     out = config.path("summaries") / s["category"] / f"{summarized}_{tr['video_id']}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
