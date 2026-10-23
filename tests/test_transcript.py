@@ -155,3 +155,55 @@ def test_brew_not_yet_released(upd):
 def test_version_key():
     assert ytdlp_update.version_key("2026.8.19") == ytdlp_update.version_key("2026.08.19")
     assert ytdlp_update.version_key("2026.08.19.1") > ytdlp_update.version_key("2026.08.19")
+
+
+def test_uploader_comments_pinned_first_without_replies_or_others():
+    d = {"comments": [
+        {"text": "다른 사람", "author_is_uploader": False, "parent": "root"},
+        {"text": "게시자 1", "author_is_uploader": True, "parent": "root"},
+        {"text": "게시자 답글", "author_is_uploader": True, "parent": "abc"},
+        {"text": "고정 댓글", "author_is_uploader": True, "is_pinned": True, "parent": "root"},
+        {"text": "  ", "author_is_uploader": True, "parent": "root"},
+    ]}
+    assert transcript.uploader_comments(d) == ["고정 댓글", "게시자 1"]
+    assert transcript.uploader_comments({}) == []
+
+
+def _ytdlp_script(monkeypatch, results):
+    calls = []
+
+    def fake(args, timeout):
+        calls.append(args)
+        r = results.pop(0)
+        if isinstance(r, Exception):
+            raise r
+        return type("P", (), {"stdout": json.dumps(r)})()
+
+    monkeypatch.setattr(transcript, "_ytdlp", fake)
+    return calls
+
+
+def test_info_requests_comments(monkeypatch, tmp_path):
+    calls = _ytdlp_script(monkeypatch, [{"id": "x", "comments": []}])
+    assert transcript.info("abcdefghijk", tmp_path, 20) == {"id": "x", "comments": []}
+    assert "--write-comments" in calls[0] and "youtube:max_comments=20,all,0,0;comment_sort=top" in calls[0]
+
+
+def test_info_without_comments_when_zero(monkeypatch, tmp_path):
+    calls = _ytdlp_script(monkeypatch, [{"id": "x"}])
+    transcript.info("abcdefghijk", tmp_path, 0)
+    assert calls == [["-J", "https://www.youtube.com/watch?v=abcdefghijk"]]
+
+
+def test_info_retries_without_comments_on_transient(monkeypatch, tmp_path):
+    calls = _ytdlp_script(monkeypatch, [TranscriptError("transient", "x"), {"id": "x"}])
+    assert transcript.info("abcdefghijk", tmp_path, 20) == {"id": "x"}
+    assert len(calls) == 2 and "--write-comments" not in calls[1]
+    assert json.loads((tmp_path / "info.json").read_text()) == {"id": "x"}
+
+
+def test_info_blocked_is_not_retried(monkeypatch, tmp_path):
+    calls = _ytdlp_script(monkeypatch, [TranscriptError("blocked", "429")])
+    with pytest.raises(TranscriptError):
+        transcript.info("abcdefghijk", tmp_path, 20)
+    assert len(calls) == 1

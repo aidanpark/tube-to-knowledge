@@ -64,9 +64,9 @@ def test_render_and_site_page(tmp_path):
 def test_music_without_subtitles_is_not_failed(monkeypatch, tmp_path):
     d = {"title": "곡", "channel": "가수", "duration": 200, "upload_date": "20240101", "categories": ["Music"],
          "track": "곡", "artist": "가수", "subtitles": {}, "automatic_captions": {}}
-    monkeypatch.setattr(transcript, "info", lambda vid, w: d)
+    monkeypatch.setattr(transcript, "info", lambda vid, w, comments=0: d)
     meta, segs, lang, gen = transcript._attempt("abcdefghijk", ["ko"])
     assert segs == [] and meta["music"]["track"] == "곡"
     with pytest.raises(transcript.TranscriptError):
-        monkeypatch.setattr(transcript, "info", lambda vid, w: {**d, "categories": ["Education"]})
+        monkeypatch.setattr(transcript, "info", lambda vid, w, comments=0: {**d, "categories": ["Education"]})
         transcript._attempt("abcdefghijk", ["ko"])

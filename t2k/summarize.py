@@ -38,7 +38,7 @@ QUALITIES = ("high", "medium", "low")
 EVIDENCE = ("연구 인용", "데이터", "시연", "의견", "일화")
 TIME_RE = re.compile(r"^(\d+:)?\d{1,2}:\d{2}$")
 URL_RE = re.compile(r"https?://[^\s<>\"'\[\]（）「」『』【】〈〉《》]+")
-MAX_LINKS = 5
+MAX_LINKS = 10  # 순위형 Shorts(톱 10)의 저장소를 모두 담는다
 
 # 모델이 쓰는 열거 값 → 저장하는 코드. 한국어(ko)는 코드를 그대로 쓴다. 저장 코드를 바꾸면 기존 요약 파일과 맞지 않게 된다
 TOKENS = {
@@ -74,7 +74,7 @@ SCHEMA_FULL = """{
   "watchReason": "시청 권유 판단 근거 1~2문장"
 }
 claims 는 2~6개.
-links: 설명란 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~5개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다."""
+links: 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~10개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다."""
 
 SCHEMA_SHORT = """{
   "category": "카테고리 목록의 값 하나",
@@ -88,7 +88,7 @@ SCHEMA_SHORT = """{
   "recommendation": "반복필수시청|필수시청|시간되면 시청|요약으로 충분|시청 불필요 삭제추천",
   "watchReason": "시청 권유 판단 근거 1문장"
 }
-links: 설명란 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~5개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다."""
+links: 링크 목록에서 영상 내용과 직접 관련된 자료(저장소, 도구, 문서, 논문, 원 게시물)만 골라 [{"ref": 번호, "label": "무엇의 링크인지 30자 이내"}] 로 0~10개 쓴다. 채널 · SNS · 후원 · 제휴 · 멤버십 · 강의 판매 링크는 넣지 않는다. 고를 것이 없으면 빈 배열 [] 이다. URL 자체는 쓰지 않고 번호만 쓴다."""
 
 
 # 음악 형식: 노래 · 공연 · 뮤직비디오는 내용을 요약하지 않고 곡 정보만 정리한다
@@ -128,7 +128,7 @@ SCHEMA_FULL_EN = """{
   "watchReason": "1 to 2 sentences explaining the recommendation"
 }
 claims: 2 to 6.
-links: from the description link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 5 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers."""
+links: from the link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 10 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers."""
 
 SCHEMA_SHORT_EN = """{
   "category": "one value from the category list",
@@ -142,7 +142,7 @@ SCHEMA_SHORT_EN = """{
   "recommendation": "must-rewatch|must-watch|watch-if-time|summary-enough|skip",
   "watchReason": "1 sentence explaining the recommendation"
 }
-links: from the description link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 5 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers."""
+links: from the link list, choose only resources directly related to the video content (repositories, tools, documents, papers, original posts) and write 0 to 10 as [{"ref": number, "label": "what the link is, 40 characters or fewer"}]. Do not include channel, social media, donation, affiliate, membership, or course-sales links. If there is nothing to choose, use an empty array []. Do not write URLs themselves, only numbers."""
 
 SCHEMA_MUSIC_EN = """{
   "kind": "music",
@@ -202,15 +202,17 @@ class SummaryError(Exception):
         self.reason = reason  # format (형식 오류, 재시도) · transient (일시 오류, 재시도)
 
 
-def description_links(description: str) -> list[str]:
-    """설명란의 URL 을 등장 순서대로, 중복 없이 반환한다 (최대 30개)."""
+def link_list(tr: dict) -> list[str]:
+    """설명란과 게시자 댓글의 URL 을 등장 순서대로(설명란 먼저), 중복 없이 반환한다 (최대 30개).
+    모델은 이 목록의 번호만 고른다 (links 의 ref)."""
     out = []
-    for u in URL_RE.findall(description or ""):
-        u = u.rstrip(".,;:!?…'\"")
-        while u.endswith(")") and u.count(")") > u.count("("):  # 괄호 짝이 맞는 위키 주소는 그대로 둔다
-            u = u[:-1].rstrip(".,;:!?…'\"")
-        if u not in out:
-            out.append(u)
+    for text in [tr.get("description") or "", *(tr.get("uploader_comments") or [])]:
+        for u in URL_RE.findall(text):
+            u = u.rstrip(".,;:!?…'\"")
+            while u.endswith(")") and u.count(")") > u.count("("):  # 괄호 짝이 맞는 위키 주소는 그대로 둔다
+                u = u[:-1].rstrip(".,;:!?…'\"")
+            if u not in out:
+                out.append(u)
     return out[:30]
 
 
@@ -253,8 +255,8 @@ def build_prompt(tr: dict) -> str:
         "CATEGORIES": cats, "SCHEMA": _schema(tr), "OTHER": config.other_category().key,
         "CHAPTERS": "\n".join(tr["chapters"]) or t("md.no_transcript"),
         "DESCRIPTION": (tr.get("description") or t("md.no_description")).strip(),
-        "LINKS": "\n".join(f"{i}. {u}" for i, u in enumerate(description_links(tr.get("description", "")), 1))
-                 or t("md.no_links"),
+        "COMMENTS": "\n\n".join(tr.get("uploader_comments") or []) or t("md.no_comments"),
+        "LINKS": "\n".join(f"{i}. {u}" for i, u in enumerate(link_list(tr), 1)) or t("md.no_links"),
     }
     for k, v in values.items():
         tpl = tpl.replace("{{" + k + "}}", v)
@@ -324,7 +326,7 @@ def _time(v, k: str) -> str:
 
 
 def validate_links(d: dict, urls: list[str]) -> list[dict]:
-    """모델이 고른 번호를 설명란 URL 로 바꾼다. 목록에 없는 번호와 형식이 틀린 항목은 버린다 (링크는 부가 정보다)."""
+    """모델이 고른 번호를 링크 목록(link_list)의 URL 로 바꾼다. 목록에 없는 번호와 형식이 틀린 항목은 버린다 (링크는 부가 정보다)."""
     out, seen = [], set()
     for x in d.get("links") or []:
         if not isinstance(x, dict) or not isinstance(x.get("label"), str) or not str(x.get("ref", "")).isdigit():
@@ -499,7 +501,7 @@ def summarize(tr: dict, attempts: int = 2) -> tuple[Path, dict]:
     last = None
     for _ in range(attempts):
         try:
-            s = validate(extract_json(call_claude(prompt)), tr["short"], description_links(tr.get("description", "")),
+            s = validate(extract_json(call_claude(prompt)), tr["short"], link_list(tr),
                          music=music_candidate(tr))
             s["links"] = resolve_links(s["links"])
             break

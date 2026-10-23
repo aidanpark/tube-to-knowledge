@@ -97,6 +97,29 @@ def test_prompt_fences_transcript_and_lists_categories():
     assert "0099_기타" in p and "{{" not in p
 
 
+
+def test_link_list_merges_description_and_uploader_comments():
+    tr = {**TR, "description": "저장소 https://github.com/a/b 와 https://x.com/c.",
+          "uploader_comments": ["링크: https://github.com/a/b", "8위 https://github.com/d/e"]}
+    assert summarize.link_list(tr) == ["https://github.com/a/b", "https://x.com/c", "https://github.com/d/e"]
+    assert summarize.link_list(TR) == []
+
+
+def test_prompt_puts_uploader_comments_inside_untrusted_fence():
+    tr = {**TR, "uploader_comments": ["저장소 링크: https://github.com/d/e"]}
+    p = summarize.build_prompt(tr)
+    body = p.rsplit("---BEGIN UNTRUSTED DESCRIPTION---", 1)[1].split("---END UNTRUSTED DESCRIPTION---")[0]
+    assert "저장소 링크: https://github.com/d/e" in body and "1. https://github.com/d/e" in body
+    assert "{{" not in summarize.build_prompt(TR)
+
+
+def test_summarize_maps_ref_to_comment_link(monkeypatch, tmp_path):
+    reply = {**FULL, "links": [{"ref": 1, "label": "스킬 저장소"}]}
+    monkeypatch.setattr(summarize, "call_claude", lambda p: json.dumps(reply, ensure_ascii=False))
+    monkeypatch.setattr(summarize.config, "path", lambda name: tmp_path / name)
+    _, s = summarize.summarize({**TR, "transcript": "x", "uploader_comments": ["https://github.com/d/e"]})
+    assert s["links"] == [{"url": "https://github.com/d/e", "label": "스킬 저장소"}]
+
 def test_video_id_forms():
     for u in ["abcdefghijk", "https://youtu.be/abcdefghijk", "https://www.youtube.com/shorts/abcdefghijk",
               "https://www.youtube.com/watch?v=abcdefghijk&t=10s"]:

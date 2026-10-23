@@ -18,6 +18,7 @@ attempts = 3                     # 일시 오류일 때 시도 횟수
 retry_wait_seconds = [30, 120]   # 1회차 실패 후 · 2회차 실패 후 대기
 update_check_hours = 6           # GitHub 최신 릴리스 확인의 최소 간격
 brew = ""                        # yt-dlp 를 업데이트할 Homebrew 경로. 비어 있으면 PATH 의 brew
+comments = 20                    # 게시자 댓글(관련 링크의 후보)을 찾으려고 받는 인기순 상위 댓글 수. 0 이면 댓글을 받지 않는다
 
 [weekly]
 # 주간 요약 (weekly.py). 매주 일요일 24:00(월요일 0시)이 지나면 지난주(월~일)의 요약을 카테고리별로 정리한다

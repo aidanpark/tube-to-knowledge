@@ -199,7 +199,7 @@ cd ~/tube-to-knowledge && git pull && uv sync && t2k service install && t2k doct
 
 - **Sites:** only the emails you allow in Cloudflare Access can open a site. A new site starts as an empty placeholder, and summaries are published only after t2k confirms the redirect to the Access sign-in (`t2k user ready`). The Worker's edit API (`/api/ops`) accepts only requests that passed Access, and `t2k user ready` discards any site edits queued before Access was confirmed. Search engines are kept out with robots.txt, `X-Robots-Tag` and a meta tag.
 - **Discord requests:** only messages from registered owners in their own channel count as requests. Claude runs in a temporary workspace (`/private/tmp/t2k-agent`) holding a copy of that person's files only, with shell and web tools and reads/writes to your home and system folders denied. Your global Claude Code settings and MCP servers are not loaded. Only that person's files are taken from the result, per-person templates render in a Jinja sandbox, and nothing is applied before approval.
-- **Summaries:** captions and video descriptions are treated as untrusted data (security rules in the prompt). Related links are limited to URLs that actually appear in the description.
+- **Summaries:** captions and video descriptions are treated as untrusted data (security rules in the prompt). Related links are limited to URLs that actually appear in the description or in the uploader's comments.
 - **Secrets:** the Discord token lives in `~/.config/t2k/discord.env` (mode 600) and the Cloudflare sign-in is kept by wrangler. Neither the data folder nor this repository holds secrets. Raw captions (`transcripts/`) are never committed.
 
 ## Project layout

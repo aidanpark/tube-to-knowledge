@@ -4,7 +4,8 @@
 JSON 한 개, status ok|error, 종료 코드 0 성공 · 1 자막 실패 · 2 잘못된 입력. 코드는 새로 작성했다.
 
 yt-dlp 만 사용하고 대체 경로는 두지 않는다.
-1. `yt-dlp -J` 로 동영상 정보와 자막 목록을 확보한다 (동영상 페이지 요청).
+1. `yt-dlp -J` 로 동영상 정보와 자막 목록, 상위 댓글을 확보한다 (동영상 페이지 요청).
+   댓글은 게시자가 단 것만 쓴다 (관련 링크의 후보). 댓글을 받다가 일시 오류가 나면 댓글 없이 한 번 더 요청한다.
 2. 자막을 선택한다: 수동 자막(languages 순서) → 원어 자동 자막. 기계 번역 자동 자막은 쓰지 않는다.
 3. `--load-info-json` 으로 1의 정보를 재사용하여 그 자막만 json3 형식으로 받는다 (자막 요청 1회).
 transient 이면 attempts 회까지 시도하고, 모두 실패하면 GitHub 의 yt-dlp 새 판을 확인하여 업데이트한 뒤 한 번 더 시도한다.
@@ -32,6 +33,8 @@ URL_RES = [
 ]
 NO_RETRY = {"no_transcript", "unavailable", "blocked", "tool"}  # tool: yt-dlp 를 실행하지 못함 (설치 문제)
 CHAPTER_SECONDS = 30
+MAX_UPLOADER_COMMENTS = 5     # 게시자 댓글은 이 수까지 (고정 댓글이 먼저)
+COMMENT_CHARS = 2000          # 댓글 하나의 최대 길이
 BLOCKED_RE = re.compile(r"HTTP Error 429|Too Many Requests|Sign in to confirm|not a bot", re.I)
 UNAVAILABLE_RE = re.compile(r"Private video|Video unavailable|has been removed|account .* terminated|"
                             r"members-only|This video is not available|Join this channel", re.I)
@@ -83,8 +86,20 @@ def _ytdlp(args: list[str], timeout: int) -> subprocess.CompletedProcess:
     return p
 
 
-def info(video_id: str, workdir: Path) -> dict:
-    p = _ytdlp(["-J", f"https://www.youtube.com/watch?v={video_id}"], 120)
+def info(video_id: str, workdir: Path, comments: int = 0) -> dict:
+    """동영상 정보. comments 가 0 보다 크면 인기순 상위 댓글(답글 제외) 그 수만큼을 함께 받는다.
+    댓글은 부가 정보다: 댓글 때문에 일시 오류가 나면 댓글 없이 다시 요청한다. 차단 · 비공개는 그대로 던진다."""
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    p = None
+    if comments > 0:
+        try:
+            p = _ytdlp(["-J", "--write-comments", "--extractor-args",
+                        f"youtube:max_comments={comments},all,0,0;comment_sort=top", url], 120)
+        except TranscriptError as e:
+            if e.reason != "transient":
+                raise
+    if p is None:
+        p = _ytdlp(["-J", url], 120)
     (workdir / "info.json").write_text(p.stdout)
     return json.loads(p.stdout)
 
@@ -104,7 +119,15 @@ def meta_of(d: dict) -> dict:
         "description": (d.get("description") or "")[:5000],  # 관련 링크를 고르는 데 쓴다
         "categories": d.get("categories") or [],  # YouTube 분류. "Music" 이면 음악 형식 후보 (summarize)
         "music": music_of(d),
+        "uploader_comments": uploader_comments(d),  # 관련 링크를 고르는 데 쓴다 (설명란에 링크가 없는 Shorts)
     }
+
+
+def uploader_comments(d: dict) -> list[str]:
+    """게시자(채널 주인)가 단 댓글의 본문. 고정 댓글이 먼저이고, 그다음은 받은 순서(인기순)다."""
+    mine = [c for c in d.get("comments") or [] if c.get("author_is_uploader") and (c.get("parent") or "root") == "root"]
+    mine.sort(key=lambda c: not c.get("is_pinned"))
+    return [c["text"].strip()[:COMMENT_CHARS] for c in mine if (c.get("text") or "").strip()][:MAX_UPLOADER_COMMENTS]
 
 
 def music_of(d: dict) -> dict:
@@ -163,7 +186,7 @@ def _subtitles(d: dict, workdir: Path, key: str, generated: bool) -> list[dict]:
 def _attempt(vid: str, langs: list[str]) -> tuple[dict, list[dict], str, bool]:
     with tempfile.TemporaryDirectory() as tmp:
         w = Path(tmp)
-        d = info(vid, w)
+        d = info(vid, w, config.settings()["ytdlp"]["comments"])
         track = pick_track(d, langs)
         if track is None:
             if "Music" in (d.get("categories") or []):

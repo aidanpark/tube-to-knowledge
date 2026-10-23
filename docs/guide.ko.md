@@ -197,7 +197,7 @@ cd ~/tube-to-knowledge && git pull && uv sync && t2k service install && t2k doct
 
 - **사이트:** Cloudflare Access 로 지정한 이메일만 연다. 새 사이트는 내용 없는 안내 페이지로 만들고, Access 로그인으로 넘어가는 것을 확인한 뒤에만 요약을 올린다 (`t2k user ready`). Worker 의 조작 API(`/api/ops`)는 Access 를 거친 요청만 받고, `t2k user ready` 는 Access 확인 전에 쌓인 사이트 조작을 버린다. 검색 엔진 수집은 robots.txt · `X-Robots-Tag` · meta 로 막는다.
 - **디스코드 지시:** owner 로 등록한 사람이 자기 채널에 쓴 글만 지시로 받는다. Claude 는 그 사람의 파일 사본만 있는 임시 작업 공간(`/private/tmp/t2k-agent`)에서 실행하며, 셸 · 웹 도구와 홈 · 시스템 폴더의 읽기 · 쓰기를 거부 규칙으로 막는다. 맥의 전역 Claude Code 설정과 MCP 서버도 적용하지 않는다. 결과 중 그 사람의 파일만 반영하고, 사람별 템플릿은 Jinja 샌드박스에서 렌더링한다. 적용은 「승인」 뒤에만 한다.
-- **요약:** 영상의 자막 · 설명란은 신뢰하지 않는 데이터로 다룬다 (프롬프트의 보안 규칙). 관련 링크는 설명란에 실제로 있는 주소만 쓴다.
+- **요약:** 영상의 자막 · 설명란은 신뢰하지 않는 데이터로 다룬다 (프롬프트의 보안 규칙). 관련 링크는 설명란과 게시자 댓글에 실제로 있는 주소만 쓴다.
 - **비밀:** 디스코드 토큰은 `~/.config/t2k/discord.env`(권한 600)에, Cloudflare 로그인 정보는 wrangler 가 보관한다. 데이터 폴더와 이 저장소에는 비밀을 두지 않는다. 자막 원문(`transcripts/`)은 커밋하지 않는다.
 
 ## 구성
