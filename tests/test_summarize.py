@@ -105,6 +105,11 @@ def test_link_list_merges_description_and_uploader_comments():
     assert summarize.link_list(TR) == []
 
 
+def test_link_list_accepts_github_without_scheme():
+    tr = {**TR, "uploader_comments": ["스킬: github.com/cathrynlavery/diagram-design 와 https://github.com/a/b, me@github.com/x"]}
+    assert summarize.link_list(tr) == ["https://github.com/cathrynlavery/diagram-design", "https://github.com/a/b"]
+
+
 def test_prompt_puts_uploader_comments_inside_untrusted_fence():
     tr = {**TR, "uploader_comments": ["저장소 링크: https://github.com/d/e"]}
     p = summarize.build_prompt(tr)

@@ -38,6 +38,8 @@ QUALITIES = ("high", "medium", "low")
 EVIDENCE = ("연구 인용", "데이터", "시연", "의견", "일화")
 TIME_RE = re.compile(r"^(\d+:)?\d{1,2}:\d{2}$")
 URL_RE = re.compile(r"https?://[^\s<>\"'\[\]（）「」『』【】〈〉《》]+")
+# 스킴 없이 쓴 GitHub 주소 (예: "github.com/owner/repo"). 다른 도메인은 낱말(next.js 등)과 구분되지 않아 넓히지 않는다
+BARE_GITHUB_RE = re.compile(r"(?<![/\w.@])((?:www\.)?github\.com/)")
 MAX_LINKS = 10  # 순위형 Shorts(톱 10)의 저장소를 모두 담는다
 
 # 모델이 쓰는 열거 값 → 저장하는 코드. 한국어(ko)는 코드를 그대로 쓴다. 저장 코드를 바꾸면 기존 요약 파일과 맞지 않게 된다
@@ -207,7 +209,7 @@ def link_list(tr: dict) -> list[str]:
     모델은 이 목록의 번호만 고른다 (links 의 ref)."""
     out = []
     for text in [tr.get("description") or "", *(tr.get("uploader_comments") or [])]:
-        for u in URL_RE.findall(text):
+        for u in URL_RE.findall(BARE_GITHUB_RE.sub(r"https://\1", text)):
             u = u.rstrip(".,;:!?…'\"")
             while u.endswith(")") and u.count(")") > u.count("("):  # 괄호 짝이 맞는 위키 주소는 그대로 둔다
                 u = u[:-1].rstrip(".,;:!?…'\"")
